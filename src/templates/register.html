@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+    <form action="{{url_for('register')}}" method="POST" class="form-control">
+        <div>
+            <label for="name">Nome:</label>
+            <input type="text" class="form-control" name="name" required/>
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" class="form-control" name="email" required/>
+        </div>
+        <div>
+            <label for="password">Senha:</label>
+            <input type="password" class="form-control" name="password" required/>
+        </div>
+        <div>
+            <label for="city">Cidade:</label>
+            <input type="text" class="form-control" name="city" required/>
+        </div>
+        <button class="btn btn-success">Registrar</button>
+    </form>
+{% endblock conteudo %}

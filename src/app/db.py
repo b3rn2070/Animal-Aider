@@ -1,5 +1,6 @@
 import sqlite3 as sql
 from datetime import datetime
+from argon2 import PasswordHasher
 
 class Database:
     def __init__(self, dbName):
@@ -14,14 +15,14 @@ class Database:
 
             query = '''CREATE TABLE IF NOT EXISTS tbUsers (
                         user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_name TEXT NOT NULL,
                         user_email TEXT NOT NULL UNIQUE,
                         user_pass TEXT NOT NULL,
-                        user_city TEXT,
-                        auth BOOLEAN DEFAULT 0
+                        user_city TEXT
                     );'''
             cur.execute(query)
             conn.commit()
-            conn.close()
+            
     
     def createReport(self):
         with self.connect() as conn:
@@ -31,13 +32,14 @@ class Database:
                             rep_id INTEGER PRIMARY KEY AUTOINCREMENT,
                             rep_title TEXT NOT NULL,
                             rep_desc TEXT,
-                            rep_region TEXT,
+                            rep_city TEXT,
                             rep_anon BOOLEAN NOT NULL DEFAULT 0,
-                            rep_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            rep_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            user_id INTEGER DEFAULT NULL
                         );'''
             cur.execute(query)
             conn.commit()
-            conn.close()
+            
         
     def createONG(self):
         with self.connect() as conn:
@@ -55,18 +57,20 @@ class Database:
                         );'''
             cur.execute(query)
             conn.commit()
-            conn.close()
 
-    def saveUser(self, email, password, city, auth=0):
+    def saveUser(self, name, email, password, city):
         with self.connect() as conn:
             cur = conn.cursor()
-
-            query = '''INSERT INTO tbUsers (*) VALUES (DEFAULT, ?, ?, ?, ?);'''
-            cur.execute(query, (email, password, city, auth))
-            conn.commit()
-            conn.close()
-            return True
             
+            if self.getUser(email):
+                return False
+            else:
+                query = '''INSERT INTO tbUsers (user_id, user_name, user_email, user_pass, user_city) VALUES (NULL, ?, ?, ?, ?);'''
+                ph = PasswordHasher()
+                password = ph.hash(password)
+                cur.execute(query, (name, email, password, city))
+                conn.commit()
+                return True
     
     def getUser(self, email):
         with self.connect() as conn:
@@ -74,21 +78,30 @@ class Database:
 
             query = "SELECT * FROM tbUsers WHERE user_email = ?"
             cur.execute(query, (email,))
-            res = cur.fetchall()
+            res = cur.fetchone()
             if res:
                 return res
             else:
                 return False
     
-    def saveReport(self, title, desc, region, anon, date=None):
+    def checkUser(self, email, password):
+        user = self.getUser(email)
+        if user:
+            ph = PasswordHasher()
+            if ph.verify(user[3], password):
+                return True
+            else:
+                return False
+    
+    def saveReport(self, title, desc, city, anon, date=None):
         if date is None:
             date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         with self.connect() as conn:
             cur = conn.cursor()
 
-            query = '''INSERT INTO tbReports (*) VALUES(DEFAULT, ?, ?, ?, ?, ?);'''
-            cur.execute(query, (title, desc, region, anon, date))
+            query = '''INSERT INTO tbReports (rep_title, rep_desc, rep_city, rep_anon, rep_date) VALUES(DEFAULT, ?, ?, ?, ?);'''
+            cur.execute(query, (title, desc, city, anon, date))
             conn.commit()
             if cur.rowcount > 0:
                 return True
