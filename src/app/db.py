@@ -33,9 +33,8 @@ class Database:
                             rep_title TEXT NOT NULL,
                             rep_desc TEXT,
                             rep_city TEXT,
-                            rep_anon BOOLEAN NOT NULL DEFAULT 0,
                             rep_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            user_id INTEGER DEFAULT NULL
+                            user_email TEXT DEFAULT NULL
                         );'''
             cur.execute(query)
             conn.commit()
@@ -92,21 +91,76 @@ class Database:
                 return True
             else:
                 return False
+            
+    def updateUser(self, id, email, name=None, city=None):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            if name:
+                query = "UPDATE tbUsers SET user_name = ? WHERE user_email = ?"
+                cur.execute(query, (name, email))
+            if city:
+                query = "UPDATE tbUsers SET user_city = ? WHERE user_email = ?"
+                cur.execute(query, (city, email))
+            if email:
+                query = "UPDATE tbUsers SET user_email = ? WHERE user_id = ?"
+                cur.execute(query, (email, id))
+            
+            if conn.commit():
+                return True
+            else:
+                return False
     
-    def saveReport(self, title, desc, city, anon, date=None):
-        if date is None:
-            date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    def saveReport(self, title, desc, city, date=None, email=None):
+        if email == None:
+            email = 'NULL'
+
+        date = datetime.strptime(date, '%Y-%m-%d').strftime('%Y-%m-%d')
 
         with self.connect() as conn:
             cur = conn.cursor()
 
-            query = '''INSERT INTO tbReports (rep_title, rep_desc, rep_city, rep_anon, rep_date) VALUES(DEFAULT, ?, ?, ?, ?);'''
-            cur.execute(query, (title, desc, city, anon, date))
-            conn.commit()
-            if cur.rowcount > 0:
+            query = '''INSERT INTO tbReport (rep_id, rep_title, rep_desc, rep_city, rep_date, user_email) VALUES (NULL,?, ?, ?, ?, ?);'''
+            cur.execute(query, (title, desc, city, date, email))
+            if conn.commit():
                 return True
             else:
                 return False
+    
+    def showReports(self):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbReport"
+            cur.execute(query)
+            res = cur.fetchall()
+            return res
+        
+    def getOng(self, email):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbOngs WHERE ong_email = ?"
+            cur.execute(query, (email,))
+            res = cur.fetchone()
+            if res:
+                return res
+            else:
+                return False
+        
+    def saveOng(self, name, phone, email, password, address, cep, desc):
+        with self.connect() as conn:
+            cur = conn.cursor()
+            
+            if self.getOng(email):
+                return False
+            else:
+                query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_address, ong_cep, ong_desc) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?);'''
+                ph = PasswordHasher()
+                password = ph.hash(password)
+                cur.execute(query, (name, phone, email, password, address, cep, desc))
+                conn.commit()
+                return True
 
 
 

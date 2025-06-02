@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<h1>Relatório de Denúncia</h1>
+<form action="{{ url_for('report') }}" method="post" class="form-control">
+    <div>
+        <label for="title">Título:</label>
+        <input type="text" class="form-control" name="title" required />
+    </div>
+    <div>
+        <label for="desc">Descrição:</label>
+        <textarea class="form-control" name="desc" required></textarea>
+    </div>
+    
+    <div>
+        <label for="date">Data do Avistamento:</label>
+        <input type="date" class="form-control" name="date" required min="{{ min_data }}" max="{{ max_data }}" />
+    </div>
+
+    {% if not session.get('logged') %}
+        <div>
+            <label for="location">Localização:</label>
+            <input type="text" class="form-control" name="city" required />
+        </div>
+        <div>
+            <label for="location">Email (opcional):</label>
+            <input type="email" class="form-control" name="email" />
+        </div>
+    {% endif %}
+
+    <!-- <div>
+        <label for="location">Anexar Imagem (opcional):</label>
+        <input type="file" class="form-control" name="image" accept="image/*" />
+    </div> -->
+
+    {% if session.get('logged') == 1 %}
+        <input type="hidden" name="email" value="{{ session.get('user_email') }}">
+        <input type="hidden" name="city" value="{{ session.get('city') }}">
+    {% endif %}
+
+    <button class="btn btn-success">Enviar Denúncia</button>
+</form>
+{% endblock conteudo %}
