@@ -1,12 +1,15 @@
 from flask import Flask, request, render_template, session, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
 from db import Database
 from datetime import date as dt, timedelta
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__, template_folder="../templates")
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+
+load_dotenv()
 db = Database('site.db')
-app.secret_key = 'your_secret_key'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
 
 db.createONG()
 db.createUser()
@@ -105,8 +108,6 @@ def report():
 def ver_dados():
     dados = db.showReports() # Exemplo com SQLAlchemy
     return render_template('dados.html', dados=dados)
-
-@app.route('/editar')
 
 @app.route('/user', methods=['GET', 'POST'])
 def user():

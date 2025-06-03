@@ -2,8 +2,8 @@
 {% block conteudo %}
 <h1>Perfil do Usuário</h1>
 <div class="user-profile">
-    <form action="{{ url_for('editar')}}" method="post"><label><strong>Nome:</strong></label> {{ user[1] }} <input type="button" value="Editar"></form>
-    <form action="{{ url_for('editar')}}" method="post"><label><strong>Email:</strong></label> {{ user[2] }} <input type="button" value="Editar"></form>
-    <form action="{{ url_for('editar')}}" method="post"><label><strong>Cidade:</strong></label> {{ user[4] }} <input type="button" value="Editar"></form>
+    <form action="{{ url_for('user')}}" method="post"><label><strong>Nome:</strong></label> <input type="text" value="{{ user[1] }}" name="name" id="">  <input type="button" value="Editar"></form>
+    <form action="{{ url_for('user')}}" method="post"><label><strong>Email:</strong></label> <input type="text" value="{{ user[2] }}" name="email" id=""> <input type="button" value="Editar"></form>
+    <form action="{{ url_for('user')}}" method="post"><label><strong>Cidade:</strong></label> <input type="text" value="{{ user[4] }}" name="city" id=""> <input type="button" value="Editar"></form>
 </div>
 {% endblock conteudo %} 
