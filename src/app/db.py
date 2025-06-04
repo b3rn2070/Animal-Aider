@@ -52,7 +52,10 @@ class Database:
                             ong_pass TEXT NOT NULL,
                             ong_address TEXT,
                             ong_cep TEXT,
-                            ong_desc TEXT
+                            ong_desc TEXT,
+                            ong_owner TEXT,
+                            ong_phone_owner TEXT,
+                            ong_cpf_owner TEXT
                         );'''
             cur.execute(query)
             conn.commit()
@@ -68,6 +71,22 @@ class Database:
                 ph = PasswordHasher()
                 password = ph.hash(password)
                 cur.execute(query, (name, email, password, city))
+                conn.commit()
+                return True
+    
+    def saveOng(self, name, phone, email, password, address, cep, owner, phone_owner, cpf, desc=None):
+        with self.connect() as conn:
+            cur = conn.cursor()
+            
+            if self.getOng(email):
+                return False
+            if desc == None:
+                desc = 'NULL'
+            else:
+                query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_address, ong_cep, ong_desc, ong_owner, ong_phone_owner, ong_cpf_owner) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
+                ph = PasswordHasher()
+                password = ph.hash(password)
+                cur.execute(query, (name, phone, email, password, address, cep, desc, owner, phone_owner, cpf))
                 conn.commit()
                 return True
     
@@ -132,6 +151,15 @@ class Database:
             cur = conn.cursor()
 
             query = "SELECT * FROM tbReport"
+            cur.execute(query)
+            res = cur.fetchall()
+            return res
+        
+    def showOngs(self):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbOngs"
             cur.execute(query)
             res = cur.fetchall()
             return res

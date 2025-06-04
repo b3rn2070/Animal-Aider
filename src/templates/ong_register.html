@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+    <form action="{{url_for('register')}}" method="POST" class="form-control">
+        <div>
+            <label for="name">Nome:</label>
+            <input type="text" class="form-control" name="name" required/>
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" class="form-control" name="email" required/>
+        </div>
+        <div>
+            <label for="password">Senha:</label>
+            <input type="password" class="form-control" name="password" required/>
+        </div>
+        <div>
+            <label for="city">Telefone:</label>
+            <input type="text" class="form-control" name="phone" required/>
+        </div>
+        <div>
+            <label for="city">Endereço:</label>
+            <input type="text" class="form-control" name="addr" required/>
+        </div>
+        <div>
+            <label for="city">CEP:</label>
+            <input type="text" class="form-control" name="cep" required/>
+        </div>
+        <div>
+            <label for="city">Descrição (opcional)</label>
+            <input type="text" class="form-control" name="desc"/>
+        </div>
+        <div>
+            <label for="city">Nome do responsável(a) da ONG:</label>
+            <input type="text" class="form-control" name="dono" required/>
+        </div>
+        <div>
+            <label for="city">Telefone do responsável(a) da ONG:</label>
+            <input type="text" class="form-control" name="phone_dono" required/>
+        </div>
+        <div>
+            <label for="city">CPF do responsável(a) da ONG:</label>
+            <input type="text" class="form-control" name="cpf" required/>
+        </div>
+        <button class="btn btn-success">Registrar</button>
+    </form>
+{% endblock conteudo %}

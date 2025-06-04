@@ -66,7 +66,6 @@ def register():
                 flash('Usuário já existe!', 'error')
                 return redirect(url_for('register'))
                 
-
             if db.saveUser(name, email, password, city):
                 flash('Usuário registrado com sucesso!', 'success')
                 return redirect(url_for('login'))
@@ -106,7 +105,7 @@ def report():
 
 @app.route('/ver_dados')
 def ver_dados():
-    dados = db.showReports() # Exemplo com SQLAlchemy
+    dados = db.showOngs() # Exemplo com SQLAlchemy
     return render_template('dados.html', dados=dados)
 
 @app.route('/user', methods=['GET', 'POST'])
@@ -145,6 +144,33 @@ def user():
                 flash('Erro ao atualizar dados. Tente novamente.', 'error')
 
     return render_template('user.html', user=user)
+
+@app.route('/ong_register', methods=['GET', 'POST'])
+def ong_register():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        phone = request.form.get('phone')
+        addr = request.form.get('addr')
+        cep = request.form.get('cep')
+        desc = request.form.get('desc')
+        cep = request.form.get('cep')
+        phone_dono = request.form.get('phone_dono')
+        name_dono = request.form.get('name_dono')
+        cpf = request.form.get('cpf')
+
+        if db.getOng(email):
+            flash('Ong já existente', 'info')
+            return redirect(url_for('index'))
+        if db.saveOng(name, phone, email, password, addr, cep, name_dono, phone_dono, cpf, desc):
+            flash('Sucesso no cadastro.', 'info')
+            return redirect(url_for('index'))
+        else:
+            flash('Erro no cadastro.', 'info')
+            return redirect(url_for('index'))    
+        
+    return render_template('ong_register.html')
 
 
 if __name__ == "__main__":
