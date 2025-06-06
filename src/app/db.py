@@ -80,13 +80,11 @@ class Database:
             
             if self.getOng(email):
                 return False
-            if desc == None:
-                desc = 'NULL'
             else:
                 query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_address, ong_cep, ong_desc, ong_owner, ong_phone_owner, ong_cpf_owner) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
                 ph = PasswordHasher()
                 password = ph.hash(password)
-                cur.execute(query, (name, phone, email, password, address, cep, desc, owner, phone_owner, cpf))
+                cur.execute(query, (name, phone, email, password, address, cep, desc, owner, phone_owner, cpf,))
                 conn.commit()
                 return True
     
@@ -159,7 +157,7 @@ class Database:
         with self.connect() as conn:
             cur = conn.cursor()
 
-            query = "SELECT * FROM tbOngs"
+            query = "SELECT * FROM tbOngs WHERE 1 = 1"
             cur.execute(query)
             res = cur.fetchall()
             return res
@@ -172,23 +170,10 @@ class Database:
             cur.execute(query, (email,))
             res = cur.fetchone()
             if res:
-                return res
+                return res, True
             else:
                 return False
-        
-    def saveOng(self, name, phone, email, password, address, cep, desc):
-        with self.connect() as conn:
-            cur = conn.cursor()
-            
-            if self.getOng(email):
-                return False
-            else:
-                query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_address, ong_cep, ong_desc) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?);'''
-                ph = PasswordHasher()
-                password = ph.hash(password)
-                cur.execute(query, (name, phone, email, password, address, cep, desc))
-                conn.commit()
-                return True
+
 
 
 

@@ -8,7 +8,7 @@ app = Flask(__name__, template_folder="../templates")
 
 load_dotenv()
 db = Database('site.db')
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = os.getenv('secret.key')
 
 
 db.createONG()
@@ -105,6 +105,7 @@ def report():
 
 @app.route('/ver_dados')
 def ver_dados():
+    dados = []
     dados = db.showOngs() # Exemplo com SQLAlchemy
     return render_template('dados.html', dados=dados)
 
@@ -163,7 +164,7 @@ def ong_register():
         if db.getOng(email):
             flash('Ong já existente', 'info')
             return redirect(url_for('index'))
-        if db.saveOng(name, phone, email, password, addr, cep, name_dono, phone_dono, cpf, desc):
+        elif db.saveOng(name, phone, email, password, addr, cep, name_dono, phone_dono, cpf, desc):
             flash('Sucesso no cadastro.', 'info')
             return redirect(url_for('index'))
         else:

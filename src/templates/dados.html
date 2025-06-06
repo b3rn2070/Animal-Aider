@@ -1,6 +1,10 @@
-<h2>relatorios teste</h2>
+<h2>Relatórios Teste</h2>
 <ul>
     {% for dado in dados %}
-        <li>{{ dado[0] }} - {{ dado[1] }} - {{ dado[2] }} - {{ dado[3] }} - {{ dado[4] }} - {{ dado[5] }} - {{ dado[6] }} - {{ dado[7] }} - {{ dado[8] }} - {{ dado[9] }}</li>
+        <li>
+            ID: {{ dado[0] }} - Nome: {{ dado[1] }} - Telefone: {{ dado[2] }} - Email: {{ dado[3] }} - Senha: {{ dado[4] }} - 
+            Endereço: {{ dado[5] }} - CEP: {{ dado[6] }} - Descrição: {{ dado[7] }} - Proprietário: {{ dado[8] }} - 
+            Telefone do Proprietário: {{ dado[9] }} - CPF do Proprietário: {{ dado[10] }}
+        </li>
     {% endfor %}
 </ul>
