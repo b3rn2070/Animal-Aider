@@ -1,9 +1,29 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 <h1>Perfil do Usuário</h1>
-<div class="user-profile">
-    <form action="{{ url_for('user')}}" method="post"><label><strong>Nome:</strong></label> <input type="text" value="{{ user[1] }}" name="name" >  <input type="button" value="Editar"></form>
-    <form action="{{ url_for('user')}}" method="post"><label><strong>Email:</strong></label> <input type="text" value="{{ user[2] }}" name="email" > <input type="button" value="Editar"></form>
-    <form action="{{ url_for('user')}}" method="post"><label><strong>Cidade:</strong></label> <input type="text" value="{{ user[4] }}" name="city" > <input type="button" value="Editar"></form>
+<div>
+    <form action="{{ url_for('user')}}" method="POST">
+        <label for="name">
+            <strong>Nome:</strong>
+        </label> 
+        <input type="text" value="{{ user[1] }}" name="name" >  
+
+        <label for="email">
+            <strong>Email:</strong>
+        </label>
+        <input type="text" value="{{ user[2] }}" name="email" >
+
+        <label for="city">
+            <strong>Cidade:</strong>
+        </label>
+        <select name="city">
+            {% for city in cidades %}
+                <option value="{{ city }}" {% if city == user[4] %}selected{% endif %}>
+                    {{ city }}
+                </option>
+            {% endfor %}
+        </select>
+        <button value="Editar">Editar</button>
+    </form>
 </div>
 {% endblock conteudo %} 

@@ -109,24 +109,38 @@ class Database:
             else:
                 return False
             
-    def updateUser(self, id, email, name=None, city=None):
+    def updateUser(self, id, email=None, name=None, city=None):
         with self.connect() as conn:
             cur = conn.cursor()
 
+            # Monta a query dinamicamente
+            fields = []
+            values = []
+
             if name:
-                query = "UPDATE tbUsers SET user_name = ? WHERE user_email = ?"
-                cur.execute(query, (name, email))
+                fields.append("user_name = ?")
+                values.append(name)
             if city:
-                query = "UPDATE tbUsers SET user_city = ? WHERE user_email = ?"
-                cur.execute(query, (city, email))
+                fields.append("user_city = ?")
+                values.append(city)
             if email:
-                query = "UPDATE tbUsers SET user_email = ? WHERE user_id = ?"
-                cur.execute(query, (email, id))
-            
-            if conn.commit():
+                fields.append("user_email = ?")
+                values.append(email)
+
+            if not fields:
+                return False  
+
+            query = f"UPDATE tbUsers SET {', '.join(fields)} WHERE user_id = ?"
+            values.append(id)  
+
+            try:
+                cur.execute(query, tuple(values))
+                conn.commit()
                 return True
-            else:
+            except Exception as e:
+                print(f"Erro ao atualizar usuário: {e}")
                 return False
+
     
     def saveReport(self, title, desc, city, date=None, email=None):
         if email == None:

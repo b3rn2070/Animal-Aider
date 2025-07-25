@@ -14,8 +14,12 @@
             <input type="password" class="form-control" name="password" required/>
         </div>
         <div>
-            <label for="city">Cidade:</label>
-            <input type="text" class="form-control" name="city" required/>
+            <label for="city">Cidade: </label>
+            <select name="city" id="cidade" required>
+                {% for city in cities %}
+                    <option value="{{ city }}">{{ city }}</option>
+                {% endfor %}
+            </select>
         </div>
         <button class="btn btn-success">Registrar</button>
     </form>

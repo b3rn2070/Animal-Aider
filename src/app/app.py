@@ -1,19 +1,22 @@
 from flask import Flask, request, render_template, session, redirect, url_for, flash
 from db import Database
 from datetime import date as dt, timedelta
-from dotenv import load_dotenv
-import os
+import secrets, urllib.request, json, requests
 
+random_key = secrets.token_hex(16)
 app = Flask(__name__, template_folder="../templates")
 
-load_dotenv()
 db = Database('site.db')
-app.config['SECRET_KEY'] = os.getenv('secret.key')
-
+app.config['SECRET_KEY'] = random_key
 
 db.createONG()
 db.createUser()
 db.createReport()
+
+url_ibge = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios"
+res = requests.get(url_ibge)
+data = res.json()
+cities = [cidade['nome'] for cidade in data]
 
 @app.route("/")
 def index():
@@ -32,11 +35,13 @@ def login():
 
             if db.checkUser(email, password) == True:
                 user = db.getUser(email)
+
                 session['logged'] = 1
                 session['user_email'] = email
                 session['user_name'] = user[1]
                 session['user_id'] = user[0]
                 session['city'] = user[4]
+
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
             else:
@@ -71,7 +76,7 @@ def register():
                 return redirect(url_for('login'))
         else:
             flash('Erro ao registrar usuário. Verifique os dados.', 'error')
-    return render_template('register.html')
+    return render_template('register.html', cities=cities)
 
 @app.route("/report", methods=['POST', 'GET'])
 def report():
@@ -115,8 +120,7 @@ def user():
         flash('Você precisa estar logado para acessar esta página.', 'error')
         return redirect(url_for('login'))
 
-    email = session.get('user_email')
-    user = db.getUser(email)
+    user = db.getUser(session.get('user_email'))
     id = session.get('user_id')
 
 
@@ -126,25 +130,22 @@ def user():
             city = request.form.get('city')
             email = request.form.get('email')
 
-            if name == user[1]:
-                name = None
-            if city == user[4]:
-                city = None
-            if email == user[2]:
-                email = None
-            if not name and not city and not email:
-                flash('Nenhum dado foi alterado.', 'info')
+            if user[1] != email and db.getUser(email):
+                flash('Email já cadastrado.', 'error')
                 return redirect(url_for('user'))
-            elif db.updateUser(id, email, name, city):
+
+            if db.updateUser(id, email, name, city):
                 flash('Dados atualizados com sucesso!', 'success')
                 session['user_email'] = email if email else user[2]
                 session['user_name'] = name if name else user[1]
                 session['user_city'] = city if city else user[4]
-                return redirect(url_for('user'))
+                session['logged'] = 1
+
+                return redirect(url_for('user'))  # Redireciona para evitar reenvio
             else:
                 flash('Erro ao atualizar dados. Tente novamente.', 'error')
 
-    return render_template('user.html', user=user)
+    return render_template('user.html', user=user, cidades=cities)
 
 @app.route('/ong_register', methods=['GET', 'POST'])
 def ong_register():
