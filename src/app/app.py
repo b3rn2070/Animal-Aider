@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, session, redirect, url_for, flash
+from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
 from db import Database
 from datetime import date as dt, timedelta
 import secrets, urllib.request, json, requests
@@ -41,6 +41,7 @@ def login():
                 session['user_name'] = user[1]
                 session['user_id'] = user[0]
                 session['city'] = user[4]
+                session['user'] = user
 
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
@@ -61,17 +62,18 @@ def register():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        if request.form.get('email') and request.form.get('password') and request.form.get('city') and request.form.get('name'):
+        if request.form.get('email') and request.form.get('password') and request.form.get('city') and request.form.get('name') and request.form.get('phone'):
             email = request.form.get('email')
             password = request.form.get('password')
             city = request.form.get('city')
             name = request.form.get('name')
+            phone = request.form.get('phone')
 
             if db.getUser(email):
                 flash('Usuário já existe!', 'error')
                 return redirect(url_for('register'))
-                
-            if db.saveUser(name, email, password, city):
+
+            if db.saveUser(name, email, password, phone, city):
                 flash('Usuário registrado com sucesso!', 'success')
                 return redirect(url_for('login'))
         else:
@@ -81,8 +83,8 @@ def register():
 @app.route("/report", methods=['POST', 'GET'])
 def report():
     hoje = dt.today()
-    min_data = hoje - timedelta(days=20)
-    max_data = hoje + timedelta(days=20)
+    min_data = hoje - timedelta(days=5)
+    max_data = hoje
 
     if request.method == 'POST':
         if request.form.get('email') == None:
@@ -111,7 +113,7 @@ def report():
 @app.route('/ver_dados')
 def ver_dados():
     dados = []
-    dados = db.showOngs() # Exemplo com SQLAlchemy
+    dados = db.showReports()
     return render_template('dados.html', dados=dados)
 
 @app.route('/user', methods=['GET', 'POST'])
@@ -141,7 +143,7 @@ def user():
                 session['user_city'] = city if city else user[4]
                 session['logged'] = 1
 
-                return redirect(url_for('user'))  # Redireciona para evitar reenvio
+                return redirect(url_for('user'))
             else:
                 flash('Erro ao atualizar dados. Tente novamente.', 'error')
 
@@ -157,23 +159,38 @@ def ong_register():
         addr = request.form.get('addr')
         cep = request.form.get('cep')
         desc = request.form.get('desc')
-        cep = request.form.get('cep')
-        phone_dono = request.form.get('phone_dono')
-        name_dono = request.form.get('name_dono')
+        city = request.form.get('city')
+        hood = request.form.get('hood')
+        num = request.form.get('num')
         cpf = request.form.get('cpf')
 
         if db.getOng(email):
             flash('Ong já existente', 'info')
             return redirect(url_for('index'))
-        elif db.saveOng(name, phone, email, password, addr, cep, name_dono, phone_dono, cpf, desc):
+
+        elif db.saveOng(name, phone, email, password, cpf, cep, city, hood, addr, num, desc):
             flash('Sucesso no cadastro.', 'info')
             return redirect(url_for('index'))
+        
         else:
             flash('Erro no cadastro.', 'info')
             return redirect(url_for('index'))    
         
     return render_template('ong_register.html')
 
+@app.route('/get_address/<cep>')
+def get_address(cep):
+    res = requests.get(f'https://viacep.com.br/ws/{cep}/json/')
+    if res.status_code == 200:
+        data = res.json()
+        if 'erro' in data:
+            return jsonify({'erro': True})
+        return jsonify(data)
+    return jsonify({'erro': True})
+
+@app.route('/login_ong', methods=['GET', 'POST'])
+def login_ong():
+    return render_template('login_ong.html')
 
 if __name__ == "__main__":
     app.run(debug=True)

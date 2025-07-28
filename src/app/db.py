@@ -18,6 +18,7 @@ class Database:
                         user_name TEXT NOT NULL,
                         user_email TEXT NOT NULL UNIQUE,
                         user_pass TEXT NOT NULL,
+                        user_phone TEXT NOT NULL,
                         user_city TEXT
                     );'''
             cur.execute(query)
@@ -34,7 +35,8 @@ class Database:
                             rep_desc TEXT,
                             rep_city TEXT,
                             rep_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            user_email TEXT DEFAULT NULL
+                            rep_phone TEXT DEFAULT NULL,
+                            rep_email TEXT DEFAULT NULL
                         );'''
             cur.execute(query)
             conn.commit()
@@ -50,41 +52,42 @@ class Database:
                             ong_phone TEXT,
                             ong_email TEXT NOT NULL UNIQUE,
                             ong_pass TEXT NOT NULL,
-                            ong_address TEXT,
+                            ong_cpf TEXT,
                             ong_cep TEXT,
-                            ong_desc TEXT,
-                            ong_owner TEXT,
-                            ong_phone_owner TEXT,
-                            ong_cpf_owner TEXT
+                            ong_city TEXT,
+                            ong_hood TEXT,
+                            ong_address TEXT,
+                            ong_num TEXT,
+                            ong_desc TEXT
                         );'''
             cur.execute(query)
             conn.commit()
 
-    def saveUser(self, name, email, password, city):
+    def saveUser(self, name, email, password, phone, city):
         with self.connect() as conn:
             cur = conn.cursor()
             
             if self.getUser(email):
                 return False
             else:
-                query = '''INSERT INTO tbUsers (user_id, user_name, user_email, user_pass, user_city) VALUES (NULL, ?, ?, ?, ?);'''
+                query = '''INSERT INTO tbUsers (user_id, user_name, user_email, user_pass, user_phone, user_city) VALUES (NULL, ?, ?, ?, ?, ?);'''
                 ph = PasswordHasher()
                 password = ph.hash(password)
-                cur.execute(query, (name, email, password, city))
+                cur.execute(query, (name, email, password, phone, city))
                 conn.commit()
                 return True
-    
-    def saveOng(self, name, phone, email, password, address, cep, owner, phone_owner, cpf, desc=None):
+
+    def saveOng(self, name, phone, email, password, cpf, cep, city, hood, address, num, desc=None):
         with self.connect() as conn:
             cur = conn.cursor()
             
             if self.getOng(email):
                 return False
             else:
-                query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_address, ong_cep, ong_desc, ong_owner, ong_phone_owner, ong_cpf_owner) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
+                query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_cpf, ong_cep, ong_city, ong_hood, ong_address, ong_num, ong_desc) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
                 ph = PasswordHasher()
                 password = ph.hash(password)
-                cur.execute(query, (name, phone, email, password, address, cep, desc, owner, phone_owner, cpf,))
+                cur.execute(query, (name, phone, email, password, cpf, cep, city, hood, address, num, desc))
                 conn.commit()
                 return True
     
@@ -141,8 +144,8 @@ class Database:
                 print(f"Erro ao atualizar usuário: {e}")
                 return False
 
-    
-    def saveReport(self, title, desc, city, date=None, email=None):
+
+    def saveReport(self, title, desc, city, date, phone, email=None):
         if email == None:
             email = 'NULL'
 
@@ -151,8 +154,8 @@ class Database:
         with self.connect() as conn:
             cur = conn.cursor()
 
-            query = '''INSERT INTO tbReport (rep_id, rep_title, rep_desc, rep_city, rep_date, user_email) VALUES (NULL,?, ?, ?, ?, ?);'''
-            cur.execute(query, (title, desc, city, date, email))
+            query = '''INSERT INTO tbReport (rep_id, rep_title, rep_desc, rep_city, rep_date, rep_phone, rep_email) VALUES (NULL,?, ?, ?, ?, ?, ?);'''
+            cur.execute(query, (title, desc, city, date, phone, email))
             if conn.commit():
                 return True
             else:
