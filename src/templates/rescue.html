@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<form action="{{ url_for('rescue')}}" method="post">
+    <div>
+        <label for="cpf">CPF:</label>
+        <input type="text" name="cep" id="cep">
+    </div>
+    <div>
+        <label for="addr">Endereço:</label>
+        <input type="text" name="addr" id="addr" required>
+    </div>
+    <div>
+        <label for="num">Número:</label>
+        <input type="text" name="num" required>
+    </div>
+    {% if user %} 
+        <input type="hidden" name="author" value="{{ user.name }}">
+        <input type="text" name="phone" value="{{ user.phone }}" required>
+    {% else %}
+        <div>
+            <label for="author">Autor:</label>
+            <input type="text" name="author" required>
+        </div>
+        <div>
+            <label for="phone">Telefone para contato:</label>
+            <input type="tel" name="phone" required>
+        </div>
+        <div>
+            <label for="desc">Descrição</label>
+            <input type="text" name="desc" required>
+        </div>
+        <div>
+            <label for="photo">Foto do animal:</label>
+            <input type="file" name="photo" accept="image/*" required>
+        </div>
+    {% endif%}
+    <div>
+        <label for="desc">Descrição:</label>
+        <input type="text" name="desc" required>
+</form>
+<script>
+    document.getElementById('cep').addEventListener('blur', function () {
+        const cep = this.value.replace(/\D/g, '');
+
+        if (cep.length === 8) {
+            fetch(`/get_address/${cep}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.erro) {
+                        document.getElementById('addr').value = data.logradouro || '';
+                        document.getElementById('city').value = data.localidade || '';
+                    } else {
+                        alert('CEP não encontrado.');
+                    }
+                })
+                .catch(() => alert('Erro ao buscar o endereço.'));
+        }
+    });
+
+</script>
+{% endblock conteudo %}

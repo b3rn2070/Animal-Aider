@@ -68,12 +68,15 @@ def register():
             city = request.form.get('city')
             name = request.form.get('name')
             phone = request.form.get('phone')
+            cep = request.form.get('cep')
+            addr = request.form.get('addr')
+            num = request.form.get('num')
 
             if db.getUser(email):
                 flash('Usuário já existe!', 'error')
                 return redirect(url_for('register'))
 
-            if db.saveUser(name, email, password, phone, city):
+            if db.saveUser(name, email, password, phone, cep, city, addr, num):
                 flash('Usuário registrado com sucesso!', 'success')
                 return redirect(url_for('login'))
         else:
@@ -191,6 +194,10 @@ def get_address(cep):
 @app.route('/login_ong', methods=['GET', 'POST'])
 def login_ong():
     return render_template('login_ong.html')
+
+@app.route('/rescue', methods=['GET', 'POST'])
+def rescue():
+    return render_template('rescue.html')
 
 if __name__ == "__main__":
     app.run(debug=True)

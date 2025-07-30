@@ -19,7 +19,10 @@ class Database:
                         user_email TEXT NOT NULL UNIQUE,
                         user_pass TEXT NOT NULL,
                         user_phone TEXT NOT NULL,
-                        user_city TEXT
+                        user_cep TEXT,
+                        user_city TEXT,
+                        user_address TEXT,
+                        user_num TEXT
                     );'''
             cur.execute(query)
             conn.commit()
@@ -74,22 +77,26 @@ class Database:
                             resc_desc TEXT,
                             resc_photo TEXT,
                             resc_author TEXT,
+                            resc_phone TEXT,
                             resc_cep TEXT,
                             resc_addr TEXT,
+                            resc_num TEXT,
                             resc_resolved BOOLEAN DEFAULT 0
-                    ) '''
+                    );'''
+            cur.execute(query)
+            conn.commit()
 
-    def saveUser(self, name, email, password, phone, city):
+    def saveUser(self, name, email, password, phone, cep, city, addr, num):
         with self.connect() as conn:
             cur = conn.cursor()
             
             if self.getUser(email):
                 return False
             else:
-                query = '''INSERT INTO tbUsers (user_id, user_name, user_email, user_pass, user_phone, user_city) VALUES (NULL, ?, ?, ?, ?, ?);'''
+                query = '''INSERT INTO tbUsers (user_id, user_name, user_email, user_pass, user_phone, user_cep, user_city, user_address, user_num ) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?);'''
                 ph = PasswordHasher()
                 password = ph.hash(password)
-                cur.execute(query, (name, email, password, phone, city))
+                cur.execute(query, (name, email, password, phone, cep, city, addr, num))
                 conn.commit()
                 return True
 

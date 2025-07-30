@@ -1,49 +1,49 @@
 {% extends 'base.html' %}
 {% block conteudo %}
-    <form action="{{url_for('ong_register')}}" method="POST" class="form-control">
+    <form action="{{url_for('ong_register')}}" method="POST">
         <div>
             <label for="name">Nome:</label>
-            <input type="text" class="form-control" name="name" required/>
+            <input type="text" name="name" required/>
         </div>
         <div>
             <label for="email">Email:</label>
-            <input type="email" class="form-control" name="email" required/>
+            <input type="email" name="email" required/>
         </div>
         <div>
             <label for="password">Senha:</label>
-            <input type="password" class="form-control" name="password" required/>
+            <input type="password" name="password" required/>
         </div>
         <div>
             <label for="phone">Telefone:</label>
-            <input type="tel" class="form-control" name="phone" maxlength="15" required/>
+            <input type="tel" name="phone" maxlength="15" required/>
         </div>
         <div>
             <label for="cep">CEP:</label>
-            <input type="text" class="form-control" name="cep" id="cep" maxlength="8" required/>
+            <input type="text" name="cep" id="cep" maxlength="8" required/>
         </div>
         <div>
             <label for="city">Cidade:</label>
-            <input type="text" class="form-control" id="city" name="city" required/>
+            <input type="text" id="city" name="city" required/>
         </div>
         <div>
             <label for="hood">Bairro:</label>
-            <input type="text" class="form-control" id="hood" name="hood" required/>
+            <input type="text" id="hood" name="hood" required/>
         </div>
         <div>
             <label for="addr">Endereço:</label>
-            <input type="text" class="form-control" id="addr" name="addr" required/>
+            <input type="text" id="addr" name="addr" required/>
         </div>
         <div>
             <label for="num">Número:</label>
-            <input type="text" class="form-control" name="num" maxlength="10" required/>
+            <input type="text" name="num" maxlength="12" required/>
         </div>
         <div>
             <label for="desc">Descrição (opcional)</label>
-            <input type="text" class="form-control" name="desc"/>
+            <input type="text" name="desc"/>
         </div>
         <div>
             <label for="cpf">CPF:</label>
-            <input type="text" class="form-control" name="cpf" maxlength="14" required/>
+            <input type="text" name="cpf" maxlength="14" required/>
         </div>
         <button class="btn btn-success">Registrar</button>
     </form>

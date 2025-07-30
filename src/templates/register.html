@@ -1,17 +1,21 @@
 {% extends 'base.html' %}
 {% block conteudo %}
-    <form action="{{url_for('register')}}" method="POST" class="form-control">
+    <form action="{{url_for('register')}}" method="POST">
         <div>
             <label for="name">Nome:</label>
-            <input type="text" class="form-control" name="name" required/>
+            <input type="text" name="name" required/>
         </div>
         <div>
             <label for="email">Email:</label>
-            <input type="email" class="form-control" name="email" required/>
+            <input type="email" name="email" required/>
         </div>
         <div>
             <label for="password">Senha:</label>
-            <input type="password" class="form-control" name="password" required/>
+            <input type="password" name="password" required/>
+        </div>
+        <div>
+            <label for="cep">CEP:</label>
+            <input type="text" name="cep" id="cep" maxlength="8" required/>
         </div>
         <div>
             <label for="city">Cidade: </label>
@@ -22,9 +26,37 @@
             </select>
         </div>
         <div>
+            <label for="addr">Endereço:</label>
+            <input type="text" id="addr" name="addr" required/>
+        </div>
+        <div>
+            <label for="num">Número:</label>
+            <input type="text" name="num" maxlength="12" required/>
+        </div>
+        <div>
             <label for="phone">Celular:</label>
             <input type="tel" name="phone" maxlength="11" required>
         </div>
         <button class="btn btn-success">Registrar</button>
     </form>
+    <script>
+        document.getElementById('cep').addEventListener('blur', function () {
+            const cep = this.value.replace(/\D/g, '');
+    
+            if (cep.length === 8) {
+                fetch(`/get_address/${cep}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.erro) {
+                            document.getElementById('addr').value = data.logradouro || '';
+                            document.getElementById('city').value = data.localidade || '';
+                        } else {
+                            alert('CEP não encontrado.');
+                        }
+                    })
+                    .catch(() => alert('Erro ao buscar o endereço.'));
+            }
+        });
+    
+    </script>
 {% endblock conteudo %}
