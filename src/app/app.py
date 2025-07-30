@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
 from db import Database
 from datetime import date as dt, timedelta
-import secrets, urllib.request, json, requests
+import secrets, requests
 
 random_key = secrets.token_hex(16)
 app = Flask(__name__, template_folder="../templates")
@@ -132,7 +132,7 @@ def user():
             city = request.form.get('city')
             email = request.form.get('email')
 
-            if user[1] != email and db.getUser(email):
+            if user[1] == email and db.getUser(email):
                 flash('Email já cadastrado.', 'error')
                 return redirect(url_for('user'))
 

@@ -36,7 +36,8 @@ class Database:
                             rep_city TEXT,
                             rep_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             rep_phone TEXT DEFAULT NULL,
-                            rep_email TEXT DEFAULT NULL
+                            rep_email TEXT DEFAULT NULL,
+                            rep_resolved BOOLEAN DEFAULT 0
                         );'''
             cur.execute(query)
             conn.commit()
@@ -62,6 +63,21 @@ class Database:
                         );'''
             cur.execute(query)
             conn.commit()
+
+    def createRescue(self):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = ''' CREATE TABLE IF NOT EXISTS tbRescues (
+                            resc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            resc_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            resc_desc TEXT,
+                            resc_photo TEXT,
+                            resc_author TEXT,
+                            resc_cep TEXT,
+                            resc_addr TEXT,
+                            resc_resolved BOOLEAN DEFAULT 0
+                    ) '''
 
     def saveUser(self, name, email, password, phone, city):
         with self.connect() as conn:
@@ -116,7 +132,6 @@ class Database:
         with self.connect() as conn:
             cur = conn.cursor()
 
-            # Monta a query dinamicamente
             fields = []
             values = []
 
