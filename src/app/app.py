@@ -40,8 +40,8 @@ def login():
                 session['user_email'] = email
                 session['user_name'] = user[1]
                 session['user_id'] = user[0]
-                session['city'] = user[4]
-                session['user'] = user
+                session['user_phone'] = user[4]
+                session['city'] = user[6]
 
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
@@ -90,20 +90,22 @@ def report():
     max_data = hoje
 
     if request.method == 'POST':
-        if request.form.get('email') == None:
-            email = 'NULL'
-        else:
-            email = request.form.get('email')
-
         if request.form.get('title') and request.form.get('desc') and request.form.get('date') and request.form.get('city'):
             title = request.form.get('title')
             desc = request.form.get('desc')
             date = request.form.get('date')
             email = request.form.get('email')
             city = request.form.get('city')
+            addr = request.form.get('addr')
+            phone = request.form.get('phone')
 
+            if not email:
+                email = None
 
-            if db.saveReport(title, desc, city, date, email):
+            if not addr:
+                addr = None
+
+            if db.saveReport(title, desc, city, date, phone, email, addr):
                 flash('Relatório enviado com sucesso!', 'success')
                 return redirect(url_for('index'))
             else:
@@ -111,7 +113,7 @@ def report():
         else:
             flash('Preencha todos os campos do relatório.', 'error')
 
-    return render_template('report.html', min_data=min_data.isoformat(), max_data=max_data.isoformat())
+    return render_template('report.html', min_data=min_data.isoformat(), max_data=max_data.isoformat(), cities=cities)
 
 @app.route('/ver_dados')
 def ver_dados():

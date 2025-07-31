@@ -1,8 +1,19 @@
-{% extends 'base.html' %}
-{% block conteudo %}
-<h1>salve cupinxa</h1>
-<form action="{{ url_for('report') }}" method="GET">
-    <button type="submit">fazer denuncia</button>
-</form>
+{% if session.get('logged') and session.get('ong_logged') == 0 %}
+    {% extends 'base.html' %}
+    {% block conteudo %}
+        <h1>salve cupinxa</h1>
+        <form action="{{ url_for('report') }}" method="GET">
+            <button type="submit">fazer denuncia</button>
+        </form>
+    {% endblock conteudo %}
+{% endif %}
 
-{% endblock conteudo %}
+{% if session.get('ong_logged') and session.get('logged') == 0 %}
+{% extends 'base_ong.html' %}
+    {% block conteudo %}
+        <h1>salve ong</h1>
+        <form action="{{ url_for('report') }}" method="GET">
+            <button type="submit">fazer denuncia</button>
+        </form>
+    {% endblock conteudo %}
+{% endif %}

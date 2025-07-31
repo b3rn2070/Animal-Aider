@@ -14,8 +14,8 @@
         <input type="text" name="num" required>
     </div>
     {% if user %} 
-        <input type="hidden" name="author" value="{{ user.name }}">
-        <input type="text" name="phone" value="{{ user.phone }}" required>
+        <input type="hidden" name="author" value="{{ session.get('user_name') }}">
+        <input type="text" name="phone" value="{{ session.get('user_name') }}" required>
     {% else %}
         <div>
             <label for="author">Autor:</label>

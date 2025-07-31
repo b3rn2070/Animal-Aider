@@ -37,6 +37,7 @@ class Database:
                             rep_title TEXT NOT NULL,
                             rep_desc TEXT,
                             rep_city TEXT,
+                            rep_address TEXT,
                             rep_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             rep_phone TEXT DEFAULT NULL,
                             rep_email TEXT DEFAULT NULL,
@@ -62,7 +63,8 @@ class Database:
                             ong_hood TEXT,
                             ong_address TEXT,
                             ong_num TEXT,
-                            ong_desc TEXT
+                            ong_desc TEXT,
+                            ong_reportsResolved INTEGER
                         );'''
             cur.execute(query)
             conn.commit()
@@ -134,6 +136,15 @@ class Database:
                 return True
             else:
                 return False
+    
+    def checkOng(self, email, password):
+        user = self.getOng(email)
+        if user:
+            ph = PasswordHasher()
+            if ph.verify(user[4], password):
+                return True
+            else:
+                return False
             
     def updateUser(self, id, email=None, name=None, city=None):
         with self.connect() as conn:
@@ -167,17 +178,20 @@ class Database:
                 return False
 
 
-    def saveReport(self, title, desc, city, date, phone, email=None):
+    def saveReport(self, title, desc, city, date, phone, email=None, addr=None):
         if email == None:
             email = 'NULL'
+        
+        if addr == None:
+            addr = 'NULL'
 
         date = datetime.strptime(date, '%Y-%m-%d').strftime('%Y-%m-%d')
 
         with self.connect() as conn:
             cur = conn.cursor()
 
-            query = '''INSERT INTO tbReport (rep_id, rep_title, rep_desc, rep_city, rep_date, rep_phone, rep_email) VALUES (NULL,?, ?, ?, ?, ?, ?);'''
-            cur.execute(query, (title, desc, city, date, phone, email))
+            query = '''INSERT INTO tbReport (rep_id, rep_title, rep_desc, rep_city, rep_addr, rep_date, rep_phone, rep_email) VALUES (NULL,?, ?, ?, ?, ?, ?, ?);'''
+            cur.execute(query, (title, desc, city, addr, date, phone, email))
             if conn.commit():
                 return True
             else:
