@@ -19,11 +19,7 @@
         </div>
         <div>
             <label for="city">Cidade: </label>
-            <select name="city" id="cidade" required>
-                {% for city in cities %}
-                    <option value="{{ city }}">{{ city }}</option>
-                {% endfor %}
-            </select>
+            <input type="text" name="city" id="city" required/>
         </div>
         <div>
             <label for="addr">Endereço:</label>

@@ -22,7 +22,8 @@ class Database:
                         user_cep TEXT,
                         user_city TEXT,
                         user_address TEXT,
-                        user_num TEXT
+                        user_num TEXT,
+                        user_profile_photo TEXT DEFAULT NULL
                     );'''
             cur.execute(query)
             conn.commit()
@@ -67,7 +68,8 @@ class Database:
                             ong_address TEXT,
                             ong_num TEXT,
                             ong_desc TEXT,
-                            ong_reportsResolved INTEGER
+                            ong_reportsResolved INTEGER DEFAULT 0,
+                            ong_profile_photo TEXT DEFAULT NULL
                         );'''
             cur.execute(query)
             conn.commit()
@@ -138,19 +140,25 @@ class Database:
         user = self.getUser(email)
         if user:
             ph = PasswordHasher()
-            if ph.verify(user[3], password):
-                return True
-            else:
+            try:
+                if ph.verify(user[3], password):
+                    return True
+            except Exception as e:
+                print(f"Erro ao verificar senha: {e}")
                 return False
+        return False
     
     def checkOng(self, email, password):
         ong = self.getOng(email)
         if ong:
             ph = PasswordHasher()
-            if ph.verify(ong[4], password):
-                return True
-            else:
+            try:
+                if ph.verify(ong[4], password): 
+                    return True
+            except Exception as e:
+                print(f"Erro ao verificar senha: {e}")
                 return False
+        return False 
             
     def updateUser(self, id, email=None, name=None, city=None):
         with self.connect() as conn:
@@ -229,7 +237,7 @@ class Database:
             cur.execute(query, (email,))
             res = cur.fetchone()
             if res:
-                return res, True
+                return res
             else:
                 return False
 

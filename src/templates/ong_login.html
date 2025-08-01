@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 <h2>Login ONG</h2>
-<form action="{{ url_for('login_ong') }}" method="POST" class="form-control">
+<form action="{{ url_for('ong_login') }}" method="POST" class="form-control">
     <div>
         <label for="email">Email:</label>
         <input type="text" name="email" required />

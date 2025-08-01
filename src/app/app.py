@@ -20,7 +20,10 @@ cities = [cidade['nome'] for cidade in data]
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    if session.get('ong_logged') and session.get('logged') == 0 or session.get('ong_logged') == 1 and session.get('logged'):
+        return render_template("ong_index.html")
+    else:
+        return render_template("index.html")
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
@@ -175,11 +178,11 @@ def ong_register():
 
         elif db.saveOng(name, phone, email, password, cpf, cep, city, hood, addr, num, desc):
             flash('Sucesso no cadastro.', 'info')
-            return redirect(url_for('index'))
+            return redirect(url_for('ong_login'))
         
         else:
             flash('Erro no cadastro.', 'info')
-            return redirect(url_for('index'))    
+            return redirect(url_for('ong_register'))    
         
     return render_template('ong_register.html')
 
@@ -193,8 +196,8 @@ def get_address(cep):
         return jsonify(data)
     return jsonify({'erro': True})
 
-@app.route('/login_ong', methods=['GET', 'POST'])
-def login_ong():
+@app.route('/ong_login', methods=['GET', 'POST'])
+def ong_login():
     if session.get('ong_logged'):
         flash('Você já está logado!', 'info')
         return redirect(url_for('index'))
@@ -206,19 +209,27 @@ def login_ong():
 
             if db.checkOng(email, password):
                 ong = db.getOng(email)
+                
                 if ong: 
-                    # session['ong_logged'] = 1
-                    # session['ong_email'] = email
-                    # session['ong_name'] = ong[1]
-                    # session['ong_id'] = ong[0]
-                    # session['ong_phone'] = ong[2]
-                    # session['ong_city'] = ong[6]
+                    session['ong_logged'] = 1
+                    session['ong_email'] = email
+                    session['ong_name'] = ong[1]
+                    session['ong_id'] = ong[0]
+                    session['ong_phone'] = ong[2]
+                    session['ong_city'] = ong[6]
 
                     flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
             else:
                 flash('email e/ou senha inválidos', 'error')
-    return render_template('login_ong.html')
+    return render_template('ong_login.html')
+
+@app.route('/ong_profile', methods=['GET', 'POST'])
+def ong_profile():
+    if not session.get('ong_logged'):
+        flash('Você precisa estar logado como ONG para acessar esta página.', 'error')
+    
+    return render_template('ong_profile.html') 
 
 @app.route('/rescue', methods=['GET', 'POST'])
 def rescue():
