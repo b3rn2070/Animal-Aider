@@ -49,7 +49,7 @@
 
     {% if session.get('logged') == 1 %}
         <input type="hidden" name="email" value="{{ session.get('user_email') }}">
-        <input type="hidden" name="phone" value="{{ session.get('user[5]') }}">
+        <input type="hidden" name="phone" value="{{ session.get('user_phone') }}">
     {% endif %}
 
     <button class="btn btn-success">Enviar Denúncia</button>

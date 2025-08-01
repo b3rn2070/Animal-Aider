@@ -41,7 +41,7 @@ def login():
                 session['user_name'] = user[1]
                 session['user_id'] = user[0]
                 session['user_phone'] = user[4]
-                session['city'] = user[6]
+                session['user_city'] = user[6]
 
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
@@ -195,6 +195,29 @@ def get_address(cep):
 
 @app.route('/login_ong', methods=['GET', 'POST'])
 def login_ong():
+    if session.get('ong_logged'):
+        flash('Você já está logado!', 'info')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        if request.form.get('email') and request.form.get('password'):
+            email = request.form.get('email')
+            password = request.form.get('password')
+
+            if db.checkOng(email, password) == True:
+                ong = db.getOng(email)
+
+                session['ong_logged'] = 1
+                session['ong_email'] = email
+                session['ong_name'] = ong[1]
+                session['ong_id'] = ong[0]
+                session['ong_phone'] = ong[4]
+                session['ong_city'] = ong[6]
+
+                flash('Login bem-sucedido!', 'success')
+                return redirect(url_for('index'))
+            else:
+                flash('email e/ou senha inválidos', 'error')
     return render_template('login_ong.html')
 
 @app.route('/rescue', methods=['GET', 'POST'])

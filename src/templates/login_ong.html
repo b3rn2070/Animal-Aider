@@ -1,6 +1,16 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 <h2>Login ONG</h2>
-
-<a href="{{ url_for('ong_register')}}"></a>
+<form action="{{ url_for('login_ong') }}" method="POST" class="form-control">
+    <div>
+        <label for="email">Email:</label>
+        <input type="text" name="email" required />
+    </div>
+    <div>
+        <label for="pass">Email:</label>
+        <input type="password" name="pass" required />
+    </div>
+    <button class="btn btn-success">Entrar</button>
+</form>
+Se não cadastrou sua ONG: <a href="{{ url_for('ong_register')}}"> Cadastre-se aqui.</a>
 {% endblock conteudo %}

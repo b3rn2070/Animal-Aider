@@ -41,7 +41,10 @@ class Database:
                             rep_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             rep_phone TEXT DEFAULT NULL,
                             rep_email TEXT DEFAULT NULL,
-                            rep_resolved BOOLEAN DEFAULT 0
+                            rep_resolved BOOLEAN DEFAULT 0,
+                            rep_photo TEXT DEFAULT NULL,
+                            rep_user_id INTEGER,
+                            FOREIGN KEY (rep_user_id) REFERENCES tbUsers(user_id)
                         );'''
             cur.execute(query)
             conn.commit()
@@ -83,7 +86,10 @@ class Database:
                             resc_cep TEXT,
                             resc_addr TEXT,
                             resc_num TEXT,
-                            resc_resolved BOOLEAN DEFAULT 0
+                            resc_resolved BOOLEAN DEFAULT 0,
+                            resc_photo TEXT DEFAULT NULL,
+                            resc_user_id INTEGER,
+                            FOREIGN KEY (resc_user_id) REFERENCES tbUsers(user_id)
                     );'''
             cur.execute(query)
             conn.commit()
