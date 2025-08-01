@@ -144,10 +144,10 @@ class Database:
                 return False
     
     def checkOng(self, email, password):
-        user = self.getOng(email)
-        if user:
+        ong = self.getOng(email)
+        if ong:
             ph = PasswordHasher()
-            if ph.verify(user[4], password):
+            if ph.verify(ong[4], password):
                 return True
             else:
                 return False

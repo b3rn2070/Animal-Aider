@@ -200,21 +200,21 @@ def login_ong():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        if request.form.get('email') and request.form.get('password'):
+        if request.form.get('email') and request.form.get('pass'):
             email = request.form.get('email')
-            password = request.form.get('password')
+            password = request.form.get('pass')
 
-            if db.checkOng(email, password) == True:
+            if db.checkOng(email, password):
                 ong = db.getOng(email)
+                if ong: 
+                    # session['ong_logged'] = 1
+                    # session['ong_email'] = email
+                    # session['ong_name'] = ong[1]
+                    # session['ong_id'] = ong[0]
+                    # session['ong_phone'] = ong[2]
+                    # session['ong_city'] = ong[6]
 
-                session['ong_logged'] = 1
-                session['ong_email'] = email
-                session['ong_name'] = ong[1]
-                session['ong_id'] = ong[0]
-                session['ong_phone'] = ong[4]
-                session['ong_city'] = ong[6]
-
-                flash('Login bem-sucedido!', 'success')
+                    flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
             else:
                 flash('email e/ou senha inválidos', 'error')
