@@ -69,6 +69,7 @@ class Database:
                             ong_num TEXT,
                             ong_desc TEXT,
                             ong_reportsResolved INTEGER DEFAULT 0,
+                            ong_rescuesResolved INTEGER DEFAULT 0,
                             ong_profile_photo TEXT DEFAULT NULL
                         );'''
             cur.execute(query)
@@ -84,43 +85,53 @@ class Database:
                             resc_desc TEXT,
                             resc_photo TEXT,
                             resc_author TEXT,
-                            resc_phone TEXT,
+                            resc_phone TEXT DEFAULT NULL,
                             resc_cep TEXT,
+                            resc_city TEXT,
                             resc_addr TEXT,
                             resc_num TEXT,
                             resc_resolved BOOLEAN DEFAULT 0,
-                            resc_photo TEXT DEFAULT NULL,
                             resc_user_id INTEGER,
                             FOREIGN KEY (resc_user_id) REFERENCES tbUsers(user_id)
                     );'''
             cur.execute(query)
             conn.commit()
 
-    def saveUser(self, name, email, password, phone, cep, city, addr, num):
+    def saveUser(self, name, email, password, phone, cep, city, addr, num, photo=None):
+        if photo is None:
+            photo = 'NULL'
+        
         with self.connect() as conn:
             cur = conn.cursor()
             
             if self.getUser(email):
                 return False
             else:
-                query = '''INSERT INTO tbUsers (user_id, user_name, user_email, user_pass, user_phone, user_cep, user_city, user_address, user_num ) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?);'''
+                query = '''INSERT INTO tbUsers (user_id, user_name, user_email, user_pass, user_phone, user_cep, user_city, user_address, user_num, user_profile_photo)
+                            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
                 ph = PasswordHasher()
                 password = ph.hash(password)
-                cur.execute(query, (name, email, password, phone, cep, city, addr, num))
+                cur.execute(query, (name, email, password, phone, cep, city, addr, num, photo))
                 conn.commit()
                 return True
 
-    def saveOng(self, name, phone, email, password, cpf, cep, city, hood, address, num, desc=None):
+    def saveOng(self, name, phone, email, password, cpf, cep, city, hood, address, num, photo=None, desc=None):
         with self.connect() as conn:
             cur = conn.cursor()
+
+            if photo is None:
+                photo = 'NULL'
+            if desc is None:
+                desc = 'NULL'
             
             if self.getOng(email):
                 return False
             else:
-                query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_cpf, ong_cep, ong_city, ong_hood, ong_address, ong_num, ong_desc) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
+                query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_cpf, ong_cep, ong_city, ong_hood, ong_address, ong_num, ong_desc, ong_reportsResolved, ong_rescuesResolved, ong_profile_photo)
+                            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
                 ph = PasswordHasher()
                 password = ph.hash(password)
-                cur.execute(query, (name, phone, email, password, cpf, cep, city, hood, address, num, desc))
+                cur.execute(query, (name, phone, email, password, cpf, cep, city, hood, address, num, desc, 0, 0, photo))
                 conn.commit()
                 return True
     
@@ -192,35 +203,120 @@ class Database:
                 return False
 
 
-    def saveReport(self, title, desc, city, date, phone, email=None, addr=None):
+    def saveReport(self, title, desc, city, date, phone, photo=None, email=None, addr=None, userId=None):
         if email == None:
             email = 'NULL'
         
         if addr == None:
             addr = 'NULL'
 
+        if userId == None:
+            userId = 'NULL'
+
+        if photo == None:
+            photo = 'NULL'
+
         date = datetime.strptime(date, '%Y-%m-%d').strftime('%Y-%m-%d')
 
         with self.connect() as conn:
             cur = conn.cursor()
 
-            query = '''INSERT INTO tbReport (rep_id, rep_title, rep_desc, rep_city, rep_addr, rep_date, rep_phone, rep_email) VALUES (NULL,?, ?, ?, ?, ?, ?, ?);'''
-            cur.execute(query, (title, desc, city, addr, date, phone, email))
-            if conn.commit():
+            query = '''INSERT INTO tbReport (rep_id, rep_title, rep_desc, rep_city, rep_address, rep_date, rep_phone, rep_email, rep_resolved, rep_photo, rep_user_id)
+                        VALUES (NULL,?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
+            cur.execute(query, (title, desc, city, addr, date, phone, email, 0, photo, userId))
+            try:
+                conn.commit()
                 return True
-            else:
+            except Exception as e:
+                print(f"Erro ao salvar a denuncia: {e}")
                 return False
-    
-    def showReports(self):
+
+    def saveRescue(self, desc, author, phone, cep, city, addr, num, photo=None, userId=None):
+        if userId is None:
+            userId = 'NULL'
+        if photo is None:
+            photo = 'NULL'
+        
         with self.connect() as conn:
             cur = conn.cursor()
 
-            query = "SELECT * FROM tbReport"
+            query = '''INSERT INTO tbRescues (resc_id, resc_desc, resc_photo, resc_author, resc_phone, resc_cep, resc_city, resc_addr, resc_num, resc_user_id)
+                        VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
+            cur.execute(query, (desc, photo, author, phone, cep, city, addr, num, userId))
+            try:
+                conn.commit()
+                return True
+            except Exception as e:
+                print(f'Erro ao salvar o resgate: {e}')
+                return False
+
+    def showAllReports(self):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbReport WHERE 1 = 1"
             cur.execute(query)
             res = cur.fetchall()
             return res
+
+    def showReportsByCity(self, city):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbReport WHERE rep_city = ?"
+            cur.execute(query, (city,))
+            res = cur.fetchall()
+            if res:
+                return res
+            else:
+                return False
+
+    def showReportById(self, id):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbReport WHERE rep_id = ?"
+            cur.execute(query, (id,))
+            res = cur.fetchall()
+            if res:
+                return res
+            else:
+                return False
+            
+    def getAllRescues(self):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbRescue"
+            cur.execute(query)
+            res = cur.fetchall()
+            return res
+
+    def getRescuesByCity(self, city):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbRescue WHERE res_city = ?"
+            cur.execute(query, (city,))
+            res = cur.fetchall()
+            if res:
+                return res
+            else:
+                return False
+
+    def getRescueById(self, id):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = "SELECT * FROM tbRescue WHERE res_id = ?"
+            cur.execute(query, (id,))
+            res = cur.fetchall()
+            if res:
+                return res
+            else:
+                return False
         
-    def showOngs(self):
+    def getAllOngs(self):
         with self.connect() as conn:
             cur = conn.cursor()
 

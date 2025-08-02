@@ -1,25 +1,31 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 <form action="{{ url_for('rescue')}}" method="post">
-    <div>
-        <label for="cpf">CPF:</label>
-        <input type="text" name="cep" id="cep">
-    </div>
-    <div>
-        <label for="addr">Endereço:</label>
-        <input type="text" name="addr" id="addr" required>
-    </div>
-    <div>
-        <label for="num">Número:</label>
-        <input type="text" name="num" required>
-    </div>
-    {% if user %} 
+    {% if session.get('logged') %} 
+        <input type="hidden" name="userId" value="{{ session.get('user_id') }}">
         <input type="hidden" name="author" value="{{ session.get('user_name') }}">
-        <input type="text" name="phone" value="{{ session.get('user_name') }}" required>
-    {% else %}
+        <input type="hidden" name="phone" value="{{ session.get('user_phone') }}">
+        <input type="hidden" name="cep" value="{{ session.get('user_cep') }}">
+        <input type="hidden" name="city" value="{{ session.get('user_city') }}">
+        <input type="hidden" name="address" value="{{ session.get('user_addr') }}">
+        <input type="hidden" name="num" value="{{ session.get('user_num') }}">
+    {% endif %}
+    {% if not session.get('logged') %}
         <div>
-            <label for="author">Autor:</label>
-            <input type="text" name="author" required>
+            <label for="cep">CEP:</label>
+            <input type="text" name="cep" id="cep" required>
+        </div>
+        <div>
+            <label for="addr">Endereço:</label>
+            <input type="text" name="addr" id="addr" required>
+        </div>
+        <div>
+            <label for="num">Número:</label>
+            <input type="text" name="num" required>
+        </div>
+        <div>
+            <label for="name">Autor:</label>
+            <input type="text" name="name" required>
         </div>
         <div>
             <label for="phone">Telefone para contato:</label>
@@ -33,10 +39,18 @@
             <label for="photo">Foto do animal:</label>
             <input type="file" name="photo" accept="image/*" required>
         </div>
-    {% endif%}
+    {% endif %}
     <div>
         <label for="desc">Descrição:</label>
         <input type="text" name="desc" required>
+    </div>
+    <div>
+        <label for="photo">Foto do animal (opcional):</label>
+        <input type="file" name="photo" accept="image/*">
+    </div>
+    <div>
+        <button type="submit">Enviar</button>
+    </div>
 </form>
 <script>
     document.getElementById('cep').addEventListener('blur', function () {

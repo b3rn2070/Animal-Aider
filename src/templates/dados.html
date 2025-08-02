@@ -2,8 +2,9 @@
 <ul>
     {% for dado in dados %}
         <li>
-            ID: {{ dado[0] }} <br> Nome: {{ dado[1] }} <br> Telefone: {{ dado[2] }} <br> Email: {{ dado[3] }} <br> Senha: {{ dado[4] }} <br> 
-            Endereço: {{ dado[5] }} <br> CEP: {{ dado[6] }} <br> Descrição: {{ dado[7] }} <br>  CPF do Proprietário: {{ dado[8] }}
+            ID: {{ dado[0] }} <br> titulo: {{ dado[1] }} <br> desc: {{ dado[2] }} <br> cidade: {{ dado[3] }} <br> addr: {{ dado[4] }} <br> 
+            data: {{ dado[5] }} <br> phone: {{ dado[6] }} <br> email: {{ dado[7] }} <br>  resolvido: {{ dado[8] }}
+            <br>  photo: {{ dado[9] }} <br>  userId: {{ dado[10] }}
         </li>
     {% endfor %}
 </ul>
