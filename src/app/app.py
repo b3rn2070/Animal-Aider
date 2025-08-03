@@ -159,8 +159,8 @@ def user():
             city = request.form.get('city')
             email = request.form.get('email')
 
-            if user[1] == email and db.getUser(email):
-                flash('Email já cadastrado.', 'error')
+            if user[1] != email and db.getUser(email):
+                flash('Algum dado editado coincide com outro existente.', 'error')
                 return redirect(url_for('user'))
 
             if db.updateUser(id, email, name, city):
@@ -234,11 +234,8 @@ def ong_login():
                 
                 if ong: 
                     session['ong_logged'] = 1
-                    session['ong_email'] = email
-                    session['ong_name'] = ong[1]
                     session['ong_id'] = ong[0]
-                    session['ong_phone'] = ong[2]
-                    session['ong_city'] = ong[6]
+                    session['ong_email'] = email
 
                     flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
@@ -255,7 +252,37 @@ def ong_profile():
         flash('Você precisa estar logado como ONG para acessar esta página.', 'error')
         return redirect(url_for('ong_login'))
 
-    return render_template('ong_profile.html')
+    ong = db.getOng(session.get('ong_email'))
+
+    if request.method == 'POST':
+        if request.form.get('name') or request.form.get('city') or request.form.get('email') or request.form.get('desc'):
+            name = request.form.get('name')
+            phone = request.form.get('phone')
+            email = request.form.get('email')
+            cpf = request.form.get('cpf')
+            cep = request.form.get('cep')
+            city = request.form.get('city')
+            hood = request.form.get('hood')
+            addr = request.form.get('addr')
+            num = request.form.get('num')
+            desc = request.form.get('desc')
+            photo = request.form.get('photo')
+
+            if ong[2] != email and db.getOng(email):
+                flash('Algum dado editado coincide com outro existente.', 'error')
+                return redirect(url_for('ong_profile'))
+
+            if db.updateOng(ong[0], email, name, city, desc):
+                flash('Dados atualizados com sucesso!', 'success')
+                session['ong_email'] = email if email else ong[2]
+                session['ong_name'] = name if name else ong[1]
+                session['ong_city'] = city if city else ong[5]
+
+                return redirect(url_for('ong_profile'))
+            else:
+                flash('Erro ao atualizar dados. Tente novamente.', 'error')
+
+    return render_template('ong_profile.html', cities=cities, ong=ong)
 
 @app.route('/rescue', methods=['GET', 'POST'])
 def rescue():

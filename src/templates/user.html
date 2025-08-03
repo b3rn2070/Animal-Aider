@@ -3,26 +3,32 @@
 <h1>Perfil do Usuário</h1>
 <div>
     <form action="{{ url_for('user')}}" method="POST">
-        <label for="name">
-            <strong>Nome:</strong>
-        </label> 
-        <input type="text" value="{{ user[1] }}" name="name" >  
+        <div>
+            <label for="name"><strong>Nome:</strong></label> 
+            <input type="text" value="{{ user[1] }}" name="name" >  
+        </div>
 
-        <label for="email">
-            <strong>Email:</strong>
-        </label>
-        <input type="text" value="{{ user[2] }}" name="email" >
-
-        <label for="city">
-            <strong>Cidade:</strong>
-        </label>
-        <select name="city">
-            {% for city in cidades %}
-                <option value="{{ city }}" {% if city == user[4] %}selected{% endif %}>
-                    {{ city }}
-                </option>
-            {% endfor %}
-        </select>
+        <div>
+            <label for="email"><strong>Email:</strong></label>
+            <input type="text" value="{{ user[2] }}" name="email" >
+        </div>
+        <div>
+            <label for="city"><strong>Cidade:</strong></label>
+            <select name="city">
+                {% for city in cidades %}
+                    <option value="{{ city }}" {% if city == user[4] %}selected{% endif %}>
+                        {{ city }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="phone"><strong>Telefone:</strong></label> 
+            <input type="text" value="{{ user[3] }}" name="phone" >
+        </div>
+        <div>
+            
+        </div>
         <button value="Editar">Editar</button>
     </form>
 </div>
