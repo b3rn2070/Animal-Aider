@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 
 UPLOAD_FOLDER = 'src/static/uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
 
 random_key = secrets.token_hex(16)
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
@@ -192,22 +192,23 @@ def user():
             phone = request.form.get('phone')
             photo = request.files['photo']
 
-            if user[1] != email and db.getUser(email):
+            if email != user[2] and db.checkUserExistence(email) == True:
                 flash('Algum dado editado coincide com outro existente.', 'error')
                 return redirect(url_for('user'))
             
-            if photo and checkExtension(photo.filename):
-
+            if photo != user and checkExtension(photo.filename):
                 extension = photo.filename.rsplit('.', 1)[1].lower() 
                 new_filename = str(uuid.uuid4()) + '.' + extension
 
                 photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+            else:
+                flash('Extensão de arquivo não suportada', 'error')
+                return redirect(url_for('user'))
 
-            if db.updateUser(id, email, name, city):
+            if db.updateUser(id, email, name, phone, new_filename):
                 flash('Dados atualizados com sucesso!', 'success')
                 session['user_email'] = email if email else user[2]
                 session['user_name'] = name if name else user[1]
-                session['user_city'] = city if city else user[4]
                 session['logged'] = 1
 
                 return redirect(url_for('user'))

@@ -3,3 +3,7 @@ __pycache__
 *.env
 .venv
 db.txt
+*.jpg
+*.png
+*.jpeg
+*.jfif

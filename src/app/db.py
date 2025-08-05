@@ -159,6 +159,20 @@ class Database:
                 return False
         return False
     
+    def checkUserExistence(self, email):
+        with self.connect() as conn:
+            cur = conn.cursor()
+
+            query = 'SELECT * FROM tbUsers WHERE user_email = ?'
+            cur.execute(query, (email,))
+            try: 
+                if cur.fetchone():
+                    return True
+            except Exception as e:
+                return False
+
+
+    
     def checkOng(self, email, password):
         ong = self.getOng(email)
         if ong:
