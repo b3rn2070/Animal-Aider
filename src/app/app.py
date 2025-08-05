@@ -1,13 +1,19 @@
 from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
 from db import Database
 from datetime import date as dt, timedelta
-import secrets, requests
+import secrets, requests, uuid, os
+from werkzeug.utils import secure_filename
+
+
+UPLOAD_FOLDER = 'src/static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 random_key = secrets.token_hex(16)
-app = Flask(__name__, template_folder="../templates")
+app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
 db = Database('site.db')
 app.config['SECRET_KEY'] = random_key
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 db.createONG()
 db.createUser()
@@ -18,6 +24,10 @@ url_ibge = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/munic
 res = requests.get(url_ibge)
 data = res.json()
 cities = [cidade['nome'] for cidade in data]
+
+def checkExtension(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.route("/")
 def index():
@@ -77,18 +87,33 @@ def register():
             cep = request.form.get('cep')
             addr = request.form.get('addr')
             num = request.form.get('num')
-            photo = request.form.get('photo')
-
-            if not photo:
-                photo = None
+            photo = request.files['photo']
 
             if db.getUser(email):
                 flash('Usuário já existe!', 'error')
                 return redirect(url_for('register'))
 
-            if db.saveUser(name, email, password, phone, cep, city, addr, num, photo):
+            if not photo:
+                photo = None
+            
+            if photo and checkExtension(photo.filename):
+
+                extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
+                new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
+                print(new_filename)
+
+                # Salva o arquivo com o novo nome
+                try:
+                    photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+                except Exception as e:
+                    flash('Houve um erro. Tente Novamente', 'error')
+                    print(e)
+                    return redirect(url_for('register'))
+                    
+            if db.saveUser(name, email, password, phone, cep, city, addr, num, new_filename):
                 flash('Usuário registrado com sucesso!', 'success')
                 return redirect(url_for('login'))
+
         else:
             flash('Erro ao registrar usuário. Verifique os dados.', 'error')
     return render_template('register.html', cities=cities)
@@ -110,7 +135,7 @@ def report():
             email = request.form.get('email')
             city = request.form.get('city')
             addr = request.form.get('addr')
-            phone = request.form.get('phone')
+            phone = request.files['phone']
             photo = request.form.get('photo')
             userId = request.form.get('userId')
             
@@ -120,14 +145,21 @@ def report():
                 email = None
             if not addr:
                 addr = None
-            if not photo:
-                photo = None
 
-            if db.saveReport(title, desc, city, date, phone, photo, email, addr, userId):
-                flash('Relatório enviado com sucesso!', 'success')
-                return redirect(url_for('index'))
-            else:
-                flash('Erro ao enviar relatório. Tente novamente.', 'error')
+
+            if photo and checkExtension(photo.filename):
+
+                extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
+                new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
+
+                # Salva o arquivo com o novo nome
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+
+                if db.saveReport(title, desc, city, date, new_filename, photo, email, addr, userId):
+                    flash('Relatório enviado com sucesso!', 'success')
+                    return redirect(url_for('index'))
+                else:
+                    flash('Erro ao enviar relatório. Tente novamente.', 'error')
         else:
             flash('Preencha todos os campos do relatório.', 'error')
 
@@ -152,16 +184,24 @@ def user():
     user = db.getUser(session.get('user_email'))
     id = session.get('user_id')
 
-
     if request.method == 'POST':
         if request.form.get('name') or request.form.get('city') or request.form.get('email'):
             name = request.form.get('name')
             city = request.form.get('city')
             email = request.form.get('email')
+            phone = request.form.get('phone')
+            photo = request.files['photo']
 
             if user[1] != email and db.getUser(email):
                 flash('Algum dado editado coincide com outro existente.', 'error')
                 return redirect(url_for('user'))
+            
+            if photo and checkExtension(photo.filename):
+
+                extension = photo.filename.rsplit('.', 1)[1].lower() 
+                new_filename = str(uuid.uuid4()) + '.' + extension
+
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
 
             if db.updateUser(id, email, name, city):
                 flash('Dados atualizados com sucesso!', 'success')
@@ -193,12 +233,23 @@ def ong_register():
         hood = request.form.get('hood')
         num = request.form.get('num')
         cpf = request.form.get('cpf')
+        photo = request.files['photo']
+
+        if not photo:
+            photo = None
 
         if db.getOng(email):
             flash('Ong já existente', 'info')
             return redirect(url_for('index'))
+        
+        if photo and checkExtension(photo.filename):
+            extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
+            new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
 
-        elif db.saveOng(name, phone, email, password, cpf, cep, city, hood, addr, num, desc):
+            # Salva o arquivo com o novo nome
+            photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+
+        if db.saveOng(name, phone, email, password, cpf, cep, city, hood, addr, num, new_filename, desc):
             flash('Sucesso no cadastro.', 'info')
             return redirect(url_for('ong_login'))
         

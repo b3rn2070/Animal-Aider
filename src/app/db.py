@@ -171,7 +171,7 @@ class Database:
                 return False
         return False 
             
-    def updateUser(self, id, email=None, name=None, city=None):
+    def updateUser(self, id, email=None, name=None, phone=None, photo=None):
         with self.connect() as conn:
             cur = conn.cursor()
 
@@ -181,12 +181,15 @@ class Database:
             if name:
                 fields.append("user_name = ?")
                 values.append(name)
-            if city:
+            if phone:
                 fields.append("user_city = ?")
-                values.append(city)
+                values.append(phone)
             if email:
                 fields.append("user_email = ?")
                 values.append(email)
+            if photo:
+                fields.append("user_profile_photo = ?")
+                values.append(photo)
 
             if not fields:
                 return False  

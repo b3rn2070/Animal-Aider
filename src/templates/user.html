@@ -2,7 +2,7 @@
 {% block conteudo %}
 <h1>Perfil do Usuário</h1>
 <div>
-    <form action="{{ url_for('user')}}" method="POST">
+    <form action="{{ url_for('user')}}" method="POST" enctype="multipart/form-data">
         <div>
             <label for="name"><strong>Nome:</strong></label> 
             <input type="text" value="{{ user[1] }}" name="name" >  
@@ -24,12 +24,23 @@
         </div>
         <div>
             <label for="phone"><strong>Telefone:</strong></label> 
-            <input type="text" value="{{ user[3] }}" name="phone" >
+            <input type="text" value="{{ user[4] }}" name="phone" >
         </div>
         <div>
-            
+            <div>
+                <label for="profile_pic"><strong>Foto de Perfil:</strong></label>
+                <input type="file" name="photo">
+                {% if user[9] %}
+                    <div>
+                        <img src="{{ url_for('static', filename='uploads/' + user[9]) }}" width="100px" alt="Foto de Perfil" id="photo">               
+                    </div>
+                {% endif %}
+            </div>
         </div>
         <button value="Editar">Editar</button>
     </form>
 </div>
+<script>
+    document.getElementById="photo"
+</script>
 {% endblock conteudo %} 

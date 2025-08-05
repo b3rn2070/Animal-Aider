@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block conteudo %}
-    <form action="{{url_for('ong_register')}}" method="POST">
+    <form action="{{url_for('ong_register')}}" method="POST" enctype="multipart/form-data">
         <div>
             <label for="name">Nome:</label>
             <input type="text" name="name" required/>
@@ -44,6 +44,10 @@
         <div>
             <label for="cpf">CPF do responsável:</label>
             <input type="text" name="cpf" maxlength="11" required/>
+        </div>
+        <div>
+            <label for="photo">Foto de perfil:</label>
+            <input type="file" name="photo" required>
         </div>
         <button class="btn btn-success">Registrar</button>
     </form>

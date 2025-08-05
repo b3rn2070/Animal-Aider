@@ -1,7 +1,7 @@
 {% extends 'base_ong.html' %}
 {% block ong_conteudo %}
 <h1>Seus dados:</h1>
-    <form action="{{ url_for('ong_profile')}}" method="POST">
+    <form action="{{ url_for('ong_profile')}}" method="POST" enctype="multipart/form-data">
         <div>
             <label for="name"> Nome: </label> 
             <input type="text" value="{{ ong[1] }}" name="name" >
@@ -57,8 +57,8 @@
             <textarea class="form-control" name="desc" {% if ong[11] == 'NULL' %} placeholder="Crie a descrição da sua ONG aqui" {% endif %} required>{% if ong[11] != 'NULL' %}{{ ong[11] }}{% endif %}</textarea>
         </div>
         <div>
-            <label for="photo"> Foto: </label>
-            <input type="image" value="{{ ong[14] }}" name="photo" >
+            <label for="photo"> Foto de perfil: </label>
+            <input type="image" value="{{ ong[14] }}" name="photo">
     <button value="Editar">Editar</button>
 </form>
 <div>
