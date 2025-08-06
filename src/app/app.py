@@ -1,9 +1,8 @@
 from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
-from db import Database
+from db import db, saveUser, saveOng, saveReport, saveRescue, getUser, checkUser, getOng, showAllReports
 from datetime import date as dt, timedelta
 import secrets, requests, uuid, os
 from werkzeug.utils import secure_filename
-
 
 UPLOAD_FOLDER = 'src/static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
@@ -11,14 +10,18 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
 random_key = secrets.token_hex(16)
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
-db = Database('site.db')
+# Configuração do banco de dados
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///animal_aider.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = random_key
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-db.createONG()
-db.createUser()
-db.createReport()
-db.createRescue()
+# Inicializa o SQLAlchemy com o app Flask
+db.init_app(app)
+
+# Cria as tabelas no banco de dados
+with app.app_context():
+    db.create_all()
 
 url_ibge = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios"
 res = requests.get(url_ibge)
@@ -47,7 +50,7 @@ def login():
             email = request.form.get('email')
             password = request.form.get('password')
 
-            if db.checkUser(email, password) == True:
+            if db.checkUser(email, password):
                 user = db.getUser(email)
 
                 session['logged'] = 1
@@ -89,7 +92,7 @@ def register():
             num = request.form.get('num')
             photo = request.files['photo']
 
-            if db.getUser(email):
+            if db.get(email):
                 flash('Usuário já existe!', 'error')
                 return redirect(url_for('register'))
 

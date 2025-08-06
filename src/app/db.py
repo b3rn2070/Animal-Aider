@@ -1,359 +1,180 @@
-import sqlite3 as sql
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from argon2 import PasswordHasher
 
-class Database:
-    def __init__(self, dbName):
-        self.dbName = dbName
-    
-    def connect(self):
-        return sql.connect(self.dbName)
-    
-    def createUser(self):
-        with self.connect() as conn:
-            cur = conn.cursor()
+db = SQLAlchemy()
 
-            query = '''CREATE TABLE IF NOT EXISTS tbUsers (
-                        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_name TEXT NOT NULL,
-                        user_email TEXT NOT NULL UNIQUE,
-                        user_pass TEXT NOT NULL,
-                        user_phone TEXT NOT NULL,
-                        user_cep TEXT,
-                        user_city TEXT,
-                        user_address TEXT,
-                        user_num TEXT,
-                        user_profile_photo TEXT DEFAULT NULL
-                    );'''
-            cur.execute(query)
-            conn.commit()
-            
-    
-    def createReport(self):
-        with self.connect() as conn:
-            cur = conn.cursor()
+class User(db.Model):
+    __tablename__ = 'tbUsers'
+    user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_name = db.Column(db.String, nullable=False)
+    user_email = db.Column(db.String, unique=True, nullable=False)
+    user_pass = db.Column(db.String, nullable=False)
+    user_phone = db.Column(db.String, nullable=False)
+    user_cep = db.Column(db.String)
+    user_city = db.Column(db.String)
+    user_address = db.Column(db.String)
+    user_num = db.Column(db.String)
+    user_profile_photo = db.Column(db.String, default=None)
 
-            query = '''CREATE TABLE IF NOT EXISTS tbReport (
-                            rep_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            rep_title TEXT NOT NULL,
-                            rep_desc TEXT,
-                            rep_city TEXT,
-                            rep_address TEXT,
-                            rep_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            rep_phone TEXT DEFAULT NULL,
-                            rep_email TEXT DEFAULT NULL,
-                            rep_resolved BOOLEAN DEFAULT 0,
-                            rep_photo TEXT DEFAULT NULL,
-                            rep_user_id INTEGER,
-                            FOREIGN KEY (rep_user_id) REFERENCES tbUsers(user_id)
-                        );'''
-            cur.execute(query)
-            conn.commit()
-            
-        
-    def createONG(self):
-        with self.connect() as conn:
-            cur = conn.cursor()
+class Report(db.Model):
+    __tablename__ = 'tbReport'
+    rep_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    rep_title = db.Column(db.String, nullable=False)
+    rep_desc = db.Column(db.String)
+    rep_city = db.Column(db.String)
+    rep_address = db.Column(db.String)
+    rep_date = db.Column(db.DateTime, default=datetime.utcnow)
+    rep_phone = db.Column(db.String, default=None)
+    rep_email = db.Column(db.String, default=None)
+    rep_resolved = db.Column(db.Boolean, default=False)
+    rep_photo = db.Column(db.String, default=None)
+    rep_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'))
 
-            query = '''CREATE TABLE IF NOT EXISTS tbOngs (
-                            ong_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            ong_name TEXT NOT NULL,
-                            ong_phone TEXT,
-                            ong_email TEXT NOT NULL UNIQUE,
-                            ong_pass TEXT NOT NULL,
-                            ong_cpf TEXT,
-                            ong_cep TEXT,
-                            ong_city TEXT,
-                            ong_hood TEXT,
-                            ong_address TEXT,
-                            ong_num TEXT,
-                            ong_desc TEXT,
-                            ong_reportsResolved INTEGER DEFAULT 0,
-                            ong_rescuesResolved INTEGER DEFAULT 0,
-                            ong_profile_photo TEXT DEFAULT NULL
-                        );'''
-            cur.execute(query)
-            conn.commit()
+class Ong(db.Model):
+    __tablename__ = 'tbOngs'
+    ong_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    ong_name = db.Column(db.String, nullable=False)
+    ong_phone = db.Column(db.String)
+    ong_email = db.Column(db.String, unique=True, nullable=False)
+    ong_pass = db.Column(db.String, nullable=False)
+    ong_cpf = db.Column(db.String)
+    ong_cep = db.Column(db.String)
+    ong_city = db.Column(db.String)
+    ong_hood = db.Column(db.String)
+    ong_address = db.Column(db.String)
+    ong_num = db.Column(db.String)
+    ong_desc = db.Column(db.String, default=None)
+    ong_reportsResolved = db.Column(db.Integer, default=0)
+    ong_rescuesResolved = db.Column(db.Integer, default=0)
+    ong_profile_photo = db.Column(db.String, default=None)
 
-    def createRescue(self):
-        with self.connect() as conn:
-            cur = conn.cursor()
+class Rescue(db.Model):
+    __tablename__ = 'tbRescues'
+    resc_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resc_date = db.Column(db.DateTime, default=datetime.utcnow)
+    resc_desc = db.Column(db.String)
+    resc_photo = db.Column(db.String)
+    resc_author = db.Column(db.String)
+    resc_phone = db.Column(db.String, default=None)
+    resc_cep = db.Column(db.String)
+    resc_city = db.Column(db.String)
+    resc_addr = db.Column(db.String)
+    resc_num = db.Column(db.String)
+    resc_resolved = db.Column(db.Boolean, default=False)
+    resc_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'))
 
-            query = ''' CREATE TABLE IF NOT EXISTS tbRescues (
-                            resc_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            resc_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            resc_desc TEXT,
-                            resc_photo TEXT,
-                            resc_author TEXT,
-                            resc_phone TEXT DEFAULT NULL,
-                            resc_cep TEXT,
-                            resc_city TEXT,
-                            resc_addr TEXT,
-                            resc_num TEXT,
-                            resc_resolved BOOLEAN DEFAULT 0,
-                            resc_user_id INTEGER,
-                            FOREIGN KEY (resc_user_id) REFERENCES tbUsers(user_id)
-                    );'''
-            cur.execute(query)
-            conn.commit()
-
-    def saveUser(self, name, email, password, phone, cep, city, addr, num, photo=None):
-        if photo is None:
-            photo = 'NULL'
-        
-        with self.connect() as conn:
-            cur = conn.cursor()
-            
-            if self.getUser(email):
-                return False
-            else:
-                query = '''INSERT INTO tbUsers (user_id, user_name, user_email, user_pass, user_phone, user_cep, user_city, user_address, user_num, user_profile_photo)
-                            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
-                ph = PasswordHasher()
-                password = ph.hash(password)
-                cur.execute(query, (name, email, password, phone, cep, city, addr, num, photo))
-                conn.commit()
-                return True
-
-    def saveOng(self, name, phone, email, password, cpf, cep, city, hood, address, num, photo=None, desc=None):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            if photo is None:
-                photo = 'NULL'
-            if desc is None:
-                desc = 'NULL'
-            
-            if self.getOng(email):
-                return False
-            else:
-                query = '''INSERT INTO tbOngs (ong_id, ong_name, ong_phone, ong_email, ong_pass, ong_cpf, ong_cep, ong_city, ong_hood, ong_address, ong_num, ong_desc, ong_reportsResolved, ong_rescuesResolved, ong_profile_photo)
-                            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
-                ph = PasswordHasher()
-                password = ph.hash(password)
-                cur.execute(query, (name, phone, email, password, cpf, cep, city, hood, address, num, desc, 0, 0, photo))
-                conn.commit()
-                return True
-    
-    def getUser(self, email):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbUsers WHERE user_email = ?"
-            cur.execute(query, (email,))
-            res = cur.fetchone()
-            if res:
-                return res
-            else:
-                return False
-    
-    def checkUser(self, email, password):
-        user = self.getUser(email)
-        if user:
-            ph = PasswordHasher()
-            try:
-                if ph.verify(user[3], password):
-                    return True
-            except Exception as e:
-                print(f"Erro ao verificar senha: {e}")
-                return False
+# Funções de CRUD
+def saveUser(name, email, password, phone, cep, city, addr, num, photo=None):
+    if User.query.filter_by(user_email=email).first():
         return False
-    
-    def checkUserExistence(self, email):
-        with self.connect() as conn:
-            cur = conn.cursor()
+    ph = PasswordHasher()
+    hashed_password = ph.hash(password)
+    user = User(
+        user_name=name,
+        user_email=email,
+        user_pass=hashed_password,
+        user_phone=phone,
+        user_cep=cep,
+        user_city=city,
+        user_address=addr,
+        user_num=num,
+        user_profile_photo=photo
+    )
+    db.session.add(user)
+    db.session.commit()
+    return True
 
-            query = 'SELECT * FROM tbUsers WHERE user_email = ?'
-            cur.execute(query, (email,))
-            try: 
-                if cur.fetchone():
-                    return True
-            except Exception as e:
-                return False
+def saveOng(name, phone, email, password, cpf, cep, city, hood, address, num, photo=None, desc=None):
+    if Ong.query.filter_by(ong_email=email).first():
+        return False
+    ph = PasswordHasher()
+    hashed_password = ph.hash(password)
+    ong = Ong(
+        ong_name=name,
+        ong_phone=phone,
+        ong_email=email,
+        ong_pass=hashed_password,
+        ong_cpf=cpf,
+        ong_cep=cep,
+        ong_city=city,
+        ong_hood=hood,
+        ong_address=address,
+        ong_num=num,
+        ong_desc=desc,
+        ong_profile_photo=photo
+    )
+    db.session.add(ong)
+    db.session.commit()
+    return True
 
+def getUser(email):
+    return User.query.filter_by(user_email=email).first()
 
-    
-    def checkOng(self, email, password):
-        ong = self.getOng(email)
-        if ong:
-            ph = PasswordHasher()
-            try:
-                if ph.verify(ong[4], password): 
-                    return True
-            except Exception as e:
-                print(f"Erro ao verificar senha: {e}")
-                return False
-        return False 
-            
-    def updateUser(self, id, email=None, name=None, phone=None, photo=None):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            fields = []
-            values = []
-
-            if name:
-                fields.append("user_name = ?")
-                values.append(name)
-            if phone:
-                fields.append("user_city = ?")
-                values.append(phone)
-            if email:
-                fields.append("user_email = ?")
-                values.append(email)
-            if photo:
-                fields.append("user_profile_photo = ?")
-                values.append(photo)
-
-            if not fields:
-                return False  
-
-            query = f"UPDATE tbUsers SET {', '.join(fields)} WHERE user_id = ?"
-            values.append(id)  
-
-            try:
-                cur.execute(query, tuple(values))
-                conn.commit()
+def checkUser(email, password):
+    user = getUser(email)
+    if user:
+        ph = PasswordHasher()
+        try:
+            if ph.verify(user.user_pass, password):
                 return True
-            except Exception as e:
-                print(f"Erro ao atualizar usuário: {e}")
-                return False
+        except Exception as e:
+            print(f"Erro ao verificar senha: {e}")
+            return False
+    return False
 
+def saveReport(title, desc, city, date, phone, photo=None, email=None, addr=None, userId=None):
+    report = Report(
+        rep_title=title,
+        rep_desc=desc,
+        rep_city=city,
+        rep_address=addr,
+        rep_date=datetime.strptime(date, '%Y-%m-%d'),
+        rep_phone=phone,
+        rep_email=email,
+        rep_photo=photo,
+        rep_user_id=userId
+    )
+    db.session.add(report)
+    db.session.commit()
+    return True
 
-    def saveReport(self, title, desc, city, date, phone, photo=None, email=None, addr=None, userId=None):
-        if email == None:
-            email = 'NULL'
-        
-        if addr == None:
-            addr = 'NULL'
+def saveRescue(desc, author, phone, cep, city, addr, num, photo=None, userId=None):
+    rescue = Rescue(
+        resc_desc=desc,
+        resc_photo=photo,
+        resc_author=author,
+        resc_phone=phone,
+        resc_cep=cep,
+        resc_city=city,
+        resc_addr=addr,
+        resc_num=num,
+        resc_user_id=userId
+    )
+    db.session.add(rescue)
+    db.session.commit()
+    return True
 
-        if userId == None:
-            userId = 'NULL'
+def showAllReports():
+    return Report.query.all()
 
-        if photo == None:
-            photo = 'NULL'
+def showReportsByCity(city):
+    return Report.query.filter_by(rep_city=city).all()
 
-        date = datetime.strptime(date, '%Y-%m-%d').strftime('%Y-%m-%d')
+def showReportById(id):
+    return Report.query.filter_by(rep_id=id).first()
 
-        with self.connect() as conn:
-            cur = conn.cursor()
+def getAllRescues():
+    return Rescue.query.all()
 
-            query = '''INSERT INTO tbReport (rep_id, rep_title, rep_desc, rep_city, rep_address, rep_date, rep_phone, rep_email, rep_resolved, rep_photo, rep_user_id)
-                        VALUES (NULL,?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
-            cur.execute(query, (title, desc, city, addr, date, phone, email, 0, photo, userId))
-            try:
-                conn.commit()
-                return True
-            except Exception as e:
-                print(f"Erro ao salvar a denuncia: {e}")
-                return False
+def getRescuesByCity(city):
+    return Rescue.query.filter_by(resc_city=city).all()
 
-    def saveRescue(self, desc, author, phone, cep, city, addr, num, photo=None, userId=None):
-        if userId is None:
-            userId = 'NULL'
-        if photo is None:
-            photo = 'NULL'
-        
-        with self.connect() as conn:
-            cur = conn.cursor()
+def getRescueById(id):
+    return Rescue.query.filter_by(resc_id=id).first()
 
-            query = '''INSERT INTO tbRescues (resc_id, resc_desc, resc_photo, resc_author, resc_phone, resc_cep, resc_city, resc_addr, resc_num, resc_user_id)
-                        VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?);'''
-            cur.execute(query, (desc, photo, author, phone, cep, city, addr, num, userId))
-            try:
-                conn.commit()
-                return True
-            except Exception as e:
-                print(f'Erro ao salvar o resgate: {e}')
-                return False
+def getAllOngs():
+    return Ong.query.all()
 
-    def showAllReports(self):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbReport WHERE 1 = 1"
-            cur.execute(query)
-            res = cur.fetchall()
-            return res
-
-    def showReportsByCity(self, city):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbReport WHERE rep_city = ?"
-            cur.execute(query, (city,))
-            res = cur.fetchall()
-            if res:
-                return res
-            else:
-                return False
-
-    def showReportById(self, id):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbReport WHERE rep_id = ?"
-            cur.execute(query, (id,))
-            res = cur.fetchall()
-            if res:
-                return res
-            else:
-                return False
-            
-    def getAllRescues(self):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbRescue"
-            cur.execute(query)
-            res = cur.fetchall()
-            return res
-
-    def getRescuesByCity(self, city):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbRescue WHERE res_city = ?"
-            cur.execute(query, (city,))
-            res = cur.fetchall()
-            if res:
-                return res
-            else:
-                return False
-
-    def getRescueById(self, id):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbRescue WHERE res_id = ?"
-            cur.execute(query, (id,))
-            res = cur.fetchall()
-            if res:
-                return res
-            else:
-                return False
-        
-    def getAllOngs(self):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbOngs WHERE 1 = 1"
-            cur.execute(query)
-            res = cur.fetchall()
-            return res
-        
-    def getOng(self, email):
-        with self.connect() as conn:
-            cur = conn.cursor()
-
-            query = "SELECT * FROM tbOngs WHERE ong_email = ?"
-            cur.execute(query, (email,))
-            res = cur.fetchone()
-            if res:
-                return res
-            else:
-                return False
-
-
-
-
+def getOng(email):
+    return Ong.query.filter_by(ong_email=email).first()
