@@ -81,6 +81,82 @@ function applyCepMask(input) {
 }
 
 /**
+ * Aplica máscara de CPF enquanto digita
+ * Formato: 123.456.789-10
+ */
+function applyCpfMask(input) {
+    input.addEventListener('input', function(e) {
+        let value = this.value.replace(/\D/g, ''); // Remove não números
+        
+        if (value.length <= 11) {
+            if (value.length <= 3) {
+                // Primeiros 3 dígitos
+                value = value.replace(/(\d{0,3})/, '$1');
+            } else if (value.length <= 6) {
+                // Até 6 dígitos: 123.456
+                value = value.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+            } else if (value.length <= 9) {
+                // Até 9 dígitos: 123.456.789
+                value = value.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+            } else {
+                // CPF completo: 123.456.789-10
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+            }
+            
+            this.value = value;
+        } else {
+            // Limita a 11 dígitos
+            this.value = this.value.slice(0, 14); // Considera os caracteres da máscara (3 pontos + 1 hífen)
+        }
+    });
+}
+
+/**
+ * Permite apenas números no campo CPF (sem máscara)
+ * @param {HTMLElement} input - O elemento input do CPF
+ */
+function allowOnlyNumbersCpf(input) {
+    input.addEventListener('input', function(e) {
+        // Remove tudo que não for número e limita a 11 dígitos
+        let value = this.value.replace(/\D/g, '');
+        if (value.length > 11) {
+            value = value.slice(0, 11);
+        }
+        this.value = value;
+    });
+    
+    // Previne colar texto não numérico
+    input.addEventListener('paste', function(e) {
+        e.preventDefault();
+        let pastedData = (e.clipboardData || window.clipboardData).getData('text');
+        // Remove caracteres não numéricos do texto colado e limita a 11 dígitos
+        let cleanData = pastedData.replace(/\D/g, '');
+        if (cleanData.length > 11) {
+            cleanData = cleanData.slice(0, 11);
+        }
+        this.value = cleanData;
+    });
+    
+    // Previne digitação de caracteres não numéricos
+    input.addEventListener('keypress', function(e) {
+        // Permite apenas números (0-9), backspace, delete, tab, enter, e setas
+        const allowedKeys = [8, 9, 13, 46, 37, 38, 39, 40];
+        const isNumber = (e.charCode >= 48 && e.charCode <= 57);
+        
+        // Também verifica se já chegou ao limite de 11 dígitos
+        const currentNumbers = this.value.replace(/\D/g, '');
+        if (currentNumbers.length >= 11 && isNumber) {
+            e.preventDefault();
+            return;
+        }
+        
+        if (!isNumber && allowedKeys.indexOf(e.keyCode) === -1) {
+            e.preventDefault();
+        }
+    });
+}
+
+/**
  * Valida se o campo contém apenas números
  * @param {HTMLElement} input - O elemento input
  * @returns {boolean} - true se válido, false se inválido
@@ -146,6 +222,28 @@ function validateCep(input) {
 }
 
 /**
+ * Valida CPF (deve ter 11 dígitos)
+ * @param {HTMLElement} input - O elemento input do CPF
+ * @returns {boolean} - true se válido
+ */
+function validateCpf(input) {
+    const numbers = input.value.replace(/\D/g, '');
+    const isValid = numbers.length === 11;
+    
+    if (isValid) {
+        input.classList.remove('error');
+        input.classList.add('valid');
+        hideErrorMessage(input);
+    } else {
+        input.classList.add('error');
+        input.classList.remove('valid');
+        showErrorMessage(input, 'CPF deve ter 11 dígitos');
+    }
+    
+    return isValid;
+}
+
+/**
  * Mostra mensagem de erro abaixo do campo
  */
 function showErrorMessage(input, message) {
@@ -191,6 +289,12 @@ function validateNumericForm(form) {
         isValid = false;
     }
     
+    // Valida CPF
+    const cpfInput = form.querySelector('input[name="cpf"]');
+    if (cpfInput && !validateCpf(cpfInput)) {
+        isValid = false;
+    }
+    
     // Valida campo número (deve ter pelo menos 1 dígito)
     const numInput = form.querySelector('input[name="num"]');
     if (numInput) {
@@ -230,6 +334,17 @@ document.addEventListener('DOMContentLoaded', function() {
         cepInput.addEventListener('blur', () => validateCep(cepInput));
     }
     
+    // Campo CPF
+    const cpfInput = document.querySelector('input[name="cpf"]');
+    if (cpfInput) {
+        // Você pode escolher entre máscara ou apenas números:
+        // Para máscara: applyCpfMask(cpfInput);
+        // Para apenas números: allowOnlyNumbersCpf(cpfInput);
+        
+        allowOnlyNumbersCpf(cpfInput); // Aplicando apenas números
+        cpfInput.addEventListener('blur', () => validateCpf(cpfInput));
+    }
+    
     // Campo número
     const numInput = document.querySelector('input[name="num"]');
     if (numInput) {
@@ -248,6 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
 document.addEventListener('DOMContentLoaded', function() {
     const cepInput = document.getElementById('cep');
     const addrInput = document.getElementById('addr');
@@ -409,3 +525,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+function previewImage(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        // Atualiza a imagem no navegador com a nova imagem
+        document.getElementById('photo').src = e.target.result;
+    };
+    
+    if (file) {
+        reader.readAsDataURL(file); // Lê o arquivo como URL de dados
+    }
+}

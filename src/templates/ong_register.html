@@ -43,7 +43,7 @@
         </div>
         <div>
             <label for="cpf">CPF do responsável:</label>
-            <input type="text" name="cpf" maxlength="11" required/>
+            <input type="text" name="cpf" maxlength="11" id="cpf" required/>
         </div>
         <div>
             <label for="photo">Foto de perfil:</label>
@@ -54,25 +54,4 @@
     <div>
         <p>Já registrou sua ONG? <a href="{{ url_for('ong_login')}}"> entre aqui.</a></p> 
     </div>
-    <script>
-        document.getElementById('cep').addEventListener('blur', function () {
-            const cep = this.value.replace(/\D/g, '');
-
-            if (cep.length === 8) {
-                fetch(`/get_address/${cep}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (!data.erro) {
-                            document.getElementById('addr').value = data.logradouro || '';
-                            document.getElementById('hood').value = data.bairro || '';
-                            document.getElementById('city').value = data.localidade || '';
-                        } else {
-                            alert('CEP não encontrado.');
-                        }
-                    })
-                    .catch(() => alert('Erro ao buscar o endereço.'));
-            }
-        });
-
-    </script>
 {% endblock conteudo %}

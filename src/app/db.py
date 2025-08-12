@@ -88,6 +88,46 @@ class Ong(db.Model):
     ong_rescuesResolved = db.Column(db.Integer, default=0)
     ong_profile_photo = db.Column(db.String, default=None)
 
+    def update_fields(self, **kwargs):
+        """
+        Atualiza apenas os campos fornecidos que são diferentes dos atuais
+        """
+        updated_fields = {}
+        
+        for field, new_value in kwargs.items():
+            if hasattr(self, field) and new_value is not None:
+                current_value = getattr(self, field)
+                
+                # Só atualiza se o valor for diferente
+                if current_value != new_value and str(new_value).strip() != '':
+                    setattr(self, field, new_value)
+                    updated_fields[field] = new_value
+        
+        return updated_fields
+
+    def safe_update(self, data_dict, allowed_fields=None):
+        """
+        Update seguro com lista de campos permitidos
+        """
+        if allowed_fields is None:
+            allowed_fields = [
+                'ong_name', 'ong_phone', 'ong_email', 'ong_cpf', 'ong_cep',
+                'ong_city', 'ong_hood', 'ong_address', 'ong_num', 'ong_desc',
+                'ong_reportsResolved', 'ong_rescuesResolved', 'ong_profile_photo'
+            ]
+        
+        # Filtra apenas campos permitidos e não vazios
+        filtered_data = {k: v for k, v in data_dict.items() 
+                        if k in allowed_fields and v is not None and str(v).strip() != ''}
+        
+        updated_fields = self.update_fields(**filtered_data)
+        
+        return {
+            'success': len(updated_fields) > 0,
+            'updated_fields': updated_fields,
+            'total_changes': len(updated_fields)
+        }
+
 class Rescue(db.Model):
     __tablename__ = 'tbRescues'
     resc_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -150,7 +190,33 @@ def updateUser(user_id, **kwargs):
         db.session.rollback()
         return {'success': False, 'error': str(e)}
 
-def saveOng(name, phone, email, password, cpf, cep, city, hood, address, num, photo=None, desc=None):
+def updateOng(ong_id, **kwargs):
+    try:
+        ong = User.query.get(ong_id)
+        if not ong:
+            return {'success': False, 'error': 'Usuário não encontrado'}
+        
+        result = ong.safe_update(kwargs)
+        
+        if result['success']:
+            db.session.commit()
+            return {
+                'success': True,
+                'updated_fields': result['updated_fields'],
+                'message': f"{result['total_changes']} campo(s) atualizado(s)"
+            }
+        else:
+            return {
+                'success': True,
+                'message': 'Nenhuma alteração necessária',
+                'updated_fields': {}
+            }
+            
+    except Exception as e:
+        db.session.rollback()
+        return {'success': False, 'error': str(e)}
+
+def saveOng(name, phone, email, password, cpf, cep, city, hood, address, num, photo, desc=None):
     if Ong.query.filter_by(ong_email=email).first():
         return False
     ph = PasswordHasher()
@@ -167,7 +233,7 @@ def saveOng(name, phone, email, password, cpf, cep, city, hood, address, num, ph
         ong_address=address,
         ong_num=num,
         ong_desc=desc,
-        ong_profile_photo=photo
+        ong_profile_photo=photo,
     )
     db.session.add(ong)
     db.session.commit()

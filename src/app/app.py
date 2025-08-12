@@ -355,35 +355,98 @@ def ong_profile():
         flash('Você precisa estar logado como ONG para acessar esta página.', 'error')
         return redirect(url_for('ong_login'))
 
-    ong = getOng(session.get('ong_email'))
+    # Busca a ONG pelo SQLAlchemy (mais eficiente)
+    ong = Ong.query.filter_by(ong_email=session.get('ong_email')).first()
+    if not ong:
+        flash('ONG não encontrada.', 'error')
+        return redirect(url_for('ong_login'))
+    
+    ong_id = session.get('ong_id')
 
     if request.method == 'POST':
-        if request.form.get('name') or request.form.get('city') or request.form.get('email') or request.form.get('desc'):
-            name = request.form.get('name')
-            phone = request.form.get('phone')
-            email = request.form.get('email')
-            cpf = request.form.get('cpf')
-            cep = request.form.get('cep')
-            city = request.form.get('city')
-            hood = request.form.get('hood')
-            addr = request.form.get('addr')
-            num = request.form.get('num')
-            desc = request.form.get('desc')
-            photo = request.form.get('photo')
-
-            if ong.ong_email != email and getOng(email):
-                flash('Algum dado editado coincide com outro existente.', 'error')
+        try:
+            # Coleta os dados do formulário (mapeando os nomes corretos)
+            form_data = {
+                'ong_name': request.form.get('name'),
+                'ong_phone': request.form.get('phone'),
+                'ong_email': request.form.get('email'),
+                'ong_cpf': request.form.get('cpf'),
+                'ong_cep': request.form.get('cep'),
+                'ong_city': request.form.get('city'),
+                'ong_hood': request.form.get('hood'),
+                'ong_address': request.form.get('addr'),  # 'addr' no form -> 'ong_address' no banco
+                'ong_num': request.form.get('num'),
+                'ong_desc': request.form.get('desc')
+            }
+            
+            # Remove valores vazios
+            form_data = {k: v for k, v in form_data.items() if v and v.strip()}
+            
+            # Verifica se há dados para atualizar
+            if not form_data and 'photo' not in request.files:
+                flash('Nenhum dado foi fornecido para atualização.', 'warning')
                 return redirect(url_for('ong_profile'))
-
-            if saveOng(session.get('ong_id'), name, phone, email, None, cpf, cep, city, hood, addr, num, photo, desc):
-                flash('Dados atualizados com sucesso!', 'success')
-                session['ong_email'] = email if email else ong[2]
-                session['ong_name'] = name if name else ong[1]
-                session['ong_city'] = city if city else ong[5]
-
-                return redirect(url_for('ong_profile'))
+            
+            # Validação de email único (só se email foi alterado)
+            if 'ong_email' in form_data and form_data['ong_email'] != ong.ong_email:
+                existing_ong = Ong.query.filter_by(ong_email=form_data['ong_email']).first()
+                if existing_ong:
+                    flash('Este email já está sendo usado por outra ONG.', 'error')
+                    return redirect(url_for('ong_profile'))
+            
+            # Processamento da foto
+            new_filename = None
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename and checkExtension(photo.filename):
+                    extension = photo.filename.rsplit('.', 1)[1].lower()
+                    new_filename = str(uuid.uuid4()) + '.' + extension
+                    
+                    # Salva a nova foto
+                    photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+                    form_data['ong_profile_photo'] = new_filename
+                    
+                    # Remove a foto antiga se existir
+                    if ong.ong_profile_photo:
+                        old_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], ong.ong_profile_photo)
+                        if os.path.exists(old_photo_path):
+                            try:
+                                os.remove(old_photo_path)
+                            except:
+                                pass  # Se não conseguir deletar, continua
+                    
+                elif photo and photo.filename:  # Se tem arquivo mas extensão inválida
+                    flash('Extensão de arquivo não suportada.', 'error')
+                    return redirect(url_for('ong_profile'))
+            
+            # Atualiza a ONG usando o método safe_update
+            result = ong.safe_update(form_data)
+            
+            if result['success']:
+                # Salva no banco
+                db.session.commit()
+                
+                if result.get('updated_fields'):
+                    flash(f'Dados atualizados com sucesso! {result["total_changes"]} campo(s) alterado(s).', 'success')
+                    
+                    # Atualiza a sessão se necessário
+                    updated_fields = result['updated_fields']
+                    if 'ong_email' in updated_fields:
+                        session['ong_email'] = updated_fields['ong_email']
+                    if 'ong_name' in updated_fields:
+                        session['ong_name'] = updated_fields['ong_name']
+                    if 'ong_city' in updated_fields:
+                        session['ong_city'] = updated_fields['ong_city']
+                else:
+                    flash('Nenhuma alteração foi necessária.', 'info')
             else:
-                flash('Erro ao atualizar dados. Tente novamente.', 'error')
+                flash('Nenhuma alteração foi detectada.', 'info')
+                
+        except Exception as e:
+            db.session.rollback()  # Reverte mudanças em caso de erro
+            flash(f'Erro interno: {str(e)}', 'error')
+            
+        return redirect(url_for('ong_profile'))
 
     return render_template('ong_profile.html', cities=cities, ong=ong)
 

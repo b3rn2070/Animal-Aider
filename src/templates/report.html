@@ -29,6 +29,10 @@
         <label for="addr">Endereço (opcional):</label>
         <input type="text" name="addr">
     </div>
+    <div>
+        <label for="photo">Foto do avistamento:</label>
+        <input type="file" name="photo" required>
+    </div>
 
     {% if not session.get('logged') %}
         <div>

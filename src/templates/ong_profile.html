@@ -4,34 +4,34 @@
     <form action="{{ url_for('ong_profile')}}" method="POST" enctype="multipart/form-data">
         <div>
             <label for="name"> Nome: </label> 
-            <input type="text" value="{{ ong[1] }}" name="name" >
+            <input type="text" value="{{ ong.ong_name }}" name="name" >
         </div>
         
         <div>
             <label for="phone"> Telefone: </label> 
-            <input type="text" value="{{ ong[2] }}" name="phone" >
+            <input type="text" value="{{ ong.ong_phone }}" name="phone" >
         </div>
 
         <div>
             <label for="email"> Email: </label>
-            <input type="text" value="{{ ong[3] }}" name="email" >
+            <input type="text" value="{{ ong.ong_email }}" name="email" >
         </div>
         
         <div>
             <label for="cpf"> CPF do responsável: </label>
-            <input type="text" value="{{ ong[5] }}" name="cpf" >
+            <input type="text" value="{{ ong.ong_cpf }}" name="cpf" >
         </div>
         
         <div>
             <label for="cep"> CEP: </label>
-            <input type="text" value="{{ ong[6] }}" name="cep" >
+            <input type="text" value="{{ ong.ong_cep }}" name="cep" >
         </div>
         
         <div>
             <label for="city"> Cidade: </label>
             <select name="city">
                 {% for city in cities %}
-                        <option value="{{ city }}" {% if city == ong[7] %}selected{% endif %}>
+                        <option value="{{ city }}" {% if city == ong.ong_city %}selected{% endif %}>
                             {{ city }}
                     </option>
                 {% endfor %}
@@ -39,33 +39,40 @@
         </div>
         <div>
             <label for="hood"> Bairro: </label>
-            <input type="text" value="{{ ong[8] }}" name="hood" >
+            <input type="text" value="{{ ong.ong_hood }}" name="hood" >
         </div>
         
         <div>
             <label for="addr"> Endereço: </label>
-            <input type="text" value="{{ ong[9] }}" name="addr" >
+            <input type="text" value="{{ ong.ong_address }}" name="addr" >
         </div>
         
         <div>
             <label for="num"> Número: </label>
-            <input type="text" value="{{ ong[10] }}" name="num" >
+            <input type="text" value="{{ ong.ong_num }}" name="num" >
         </div>
         
         <div>
             <label for="desc"> Descrição: </label>
-            <textarea class="form-control" name="desc" {% if ong[11] == 'NULL' %} placeholder="Crie a descrição da sua ONG aqui" {% endif %} required>{% if ong[11] != 'NULL' %}{{ ong[11] }}{% endif %}</textarea>
+            <textarea class="form-control" name="desc" {% if ong.ong_desc == 'NULL' %} placeholder="Crie a descrição da sua ONG aqui" {% endif %} required>{% if ong.ong_desc != 'NULL' %}{{ ong.ong_desc }}{% endif %}</textarea>
         </div>
         <div>
-            <label for="photo"> Foto de perfil: </label>
-            <input type="image" value="{{ ong[14] }}" name="photo">
+            <div>
+                <label for="ong_profile_photo"><strong>Foto de Perfil:</strong></label>
+                <input type="file" name="photo" onchange="previewImage(event)">
+                {% if ong.ong_profile_photo %}
+                    <div>
+                        <img src="{{ url_for('static', filename='uploads/' + ong.ong_profile_photo) }}" width="100px" alt="Foto de Perfil" id="photo">               
+                    </div>
+                {% endif %}
+        </div>
     <button value="Editar">Editar</button>
 </form>
 <div>
     <h3>Ocorrencias atendidas:</h3>
-    <h4> {{ ong[12] }}</h4>
+    <h4> {{ ong.ong_reportsResolved }}</h4>
 
     <h3>Resgates atendidos:</h3>
-    <h4> {{ ong[13] }}</h4>
+    <h4> {{ ong.ong_rescuesResolved }}</h4>
 </div>
 {% endblock ong_conteudo %}

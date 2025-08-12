@@ -51,19 +51,5 @@
         <button value="Editar">Editar</button>                                                                                                                                                                                                                                                                                                                      <!-- espinafre was here -->
     </form>
 </div>
-<script>
-    function previewImage(event) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            // Atualiza a imagem no navegador com a nova imagem
-            document.getElementById('photo').src = e.target.result;
-        };
-        
-        if (file) {
-            reader.readAsDataURL(file); // Lê o arquivo como URL de dados
-        }
-    }
-</script>
+
 {% endblock conteudo %} 
