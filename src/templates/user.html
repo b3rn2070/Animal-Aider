@@ -5,37 +5,48 @@
     <form action="{{ url_for('user')}}" method="POST" enctype="multipart/form-data">
         <div>
             <label for="name"><strong>Nome:</strong></label> 
-            <input type="text" value="{{ user[1] }}" name="name" >  
+            <input type="text" value="{{ user.user_name }}" name="name" >  
         </div>
 
         <div>
             <label for="email"><strong>Email:</strong></label>
-            <input type="text" value="{{ user[2] }}" name="email" >
+            <input type="text" value="{{ user.user_email }}" name="email" >
         </div>
         <div>
             <label for="city"><strong>Cidade:</strong></label>
             <select name="city">
                 {% for city in cidades %}
-                    <option value="{{ city }}" {% if city == user[4] %}selected{% endif %}>
+                    <option value="{{ city }}" {% if city == user.user_city %}selected{% endif %}>
                         {{ city }}
                     </option>
                 {% endfor %}
             </select>
         </div>
         <div>
-            <label for="phone"><strong>Telefone:</strong></label> 
-            <input type="text" value="{{ user[4] }}" name="phone" >
+            <label for="cep">CEP:</label>
+            <input type="text" name="cep" id="cep" value="{{ user.user_cep }}" required/>
         </div>
         <div>
-            <div>
+            <label for="addr">Endereço:</label>
+            <input type="text" id="addr" name="addr" value="{{ user.user_address }}"/>
+        </div>
+        <div>
+            <label for="num">Número:</label>
+            <input type="text" name="num" maxlength="12" value="{{ user.user_num }}"/>
+        </div>
+        <div>
+        <div>
+            <label for="phone"><strong>Celular:</strong></label> 
+            <input type="text" value="{{ user.user_phone }}" name="phone" >
+        </div>
+        <div>
                 <label for="profile_pic"><strong>Foto de Perfil:</strong></label>
                 <input type="file" name="photo" onchange="previewImage(event)">
-                {% if user[9] %}
+                {% if user.user_profile_photo %}
                     <div>
-                        <img src="{{ url_for('static', filename='uploads/' + user[9]) }}" width="100px" alt="Foto de Perfil" id="photo">               
+                        <img src="{{ url_for('static', filename='uploads/' + user.user_profile_photo) }}" width="100px" alt="Foto de Perfil" id="photo">               
                     </div>
                 {% endif %}
-            </div>
         </div>
         <button value="Editar">Editar</button>                                                                                                                                                                                                                                                                                                                      <!-- espinafre was here -->
     </form>

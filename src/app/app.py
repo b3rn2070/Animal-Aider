@@ -1,8 +1,8 @@
 from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
-from db import db, saveUser, saveOng, saveReport, saveRescue, getUser, checkUser, getOng, showAllReports
+from extensions import db
+from db import *
 from datetime import date as dt, timedelta
 import secrets, requests, uuid, os
-from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = 'src/static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
@@ -50,17 +50,17 @@ def login():
             email = request.form.get('email')
             password = request.form.get('password')
 
-            if db.checkUser(email, password):
-                user = db.getUser(email)
+            if checkUser(email, password):
+                user = getUser(email)
 
                 session['logged'] = 1
-                session['user_id'] = user[0]
-                session['user_name'] = user[1]
-                session['user_email'] = email
-                session['user_phone'] = user[4]
-                session['user_cep'] = user[5]
-                session['user_city'] = user[6]
-                session['user_addr'] = user[7]
+                session['user_id'] = user.user_id
+                session['user_name'] = user.user_name
+                session['user_email'] = user.user_email
+                session['user_phone'] = user.user_phone
+                session['user_cep'] = user.user_cep
+                session['user_city'] = user.user_city
+                session['user_addr'] = user.user_address
 
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
@@ -92,7 +92,7 @@ def register():
             num = request.form.get('num')
             photo = request.files['photo']
 
-            if db.get(email):
+            if getUser(email):
                 flash('Usuário já existe!', 'error')
                 return redirect(url_for('register'))
 
@@ -103,8 +103,6 @@ def register():
 
                 extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
                 new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
-                print(new_filename)
-
                 # Salva o arquivo com o novo nome
                 try:
                     photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
@@ -113,7 +111,7 @@ def register():
                     print(e)
                     return redirect(url_for('register'))
                     
-            if db.saveUser(name, email, password, phone, cep, city, addr, num, new_filename):
+            if saveUser(name, email, password, phone, cep, city, addr, num, new_filename):
                 flash('Usuário registrado com sucesso!', 'success')
                 return redirect(url_for('login'))
 
@@ -138,8 +136,8 @@ def report():
             email = request.form.get('email')
             city = request.form.get('city')
             addr = request.form.get('addr')
-            phone = request.files['phone']
-            photo = request.form.get('photo')
+            phone = request.form.get('phone')
+            photo = request.files('photo')
             userId = request.form.get('userId')
             
             if not userId:
@@ -158,7 +156,7 @@ def report():
                 # Salva o arquivo com o novo nome
                 photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
 
-                if db.saveReport(title, desc, city, date, new_filename, photo, email, addr, userId):
+                if saveReport(title, desc, city, date, phone, new_filename, email, addr, userId):
                     flash('Relatório enviado com sucesso!', 'success')
                     return redirect(url_for('index'))
                 else:
@@ -172,7 +170,7 @@ def report():
 @app.route('/ver_dados')
 def ver_dados():
     dados = []
-    dados = db.showAllReports()
+    dados = showAllReports()
     return render_template('dados.html', dados=dados)
 
 @app.route('/user', methods=['GET', 'POST'])
@@ -184,39 +182,89 @@ def user():
     if session.get('ong_logged'):
         return redirect(url_for('index'))
 
-    user = db.getUser(session.get('user_email'))
-    id = session.get('user_id')
+    # Busca o usuário pelo SQLAlchemy (mais eficiente)
+    user = User.query.filter_by(user_email=session.get('user_email')).first()
+    if not user:
+        flash('Usuário não encontrado.', 'error')
+        return redirect(url_for('login'))
+    
+    user_id = session.get('user_id')
 
     if request.method == 'POST':
-        if request.form.get('name') or request.form.get('city') or request.form.get('email'):
-            name = request.form.get('name')
-            city = request.form.get('city')
-            email = request.form.get('email')
-            phone = request.form.get('phone')
-            photo = request.files['photo']
-
-            if email != user[2] and db.checkUserExistence(email) == True:
-                flash('Algum dado editado coincide com outro existente.', 'error')
+        try:
+            # Coleta os dados do formulário (mapeando os nomes corretos)
+            form_data = {
+                'user_name': request.form.get('name'),
+                'user_city': request.form.get('city'),
+                'user_email': request.form.get('email'),
+                'user_phone': request.form.get('phone'),
+                'user_cep': request.form.get('cep'),
+                'user_address': request.form.get('addr'),  # 'addr' no form -> 'user_address' no banco
+                'user_num': request.form.get('num')
+            }
+            
+            # Remove valores vazios
+            form_data = {k: v for k, v in form_data.items() if v and v.strip()}
+            
+            # Verifica se há dados para atualizar
+            if not form_data and 'photo' not in request.files:
+                flash('Nenhum dado foi fornecido para atualização.', 'warning')
                 return redirect(url_for('user'))
             
-            if photo != user and checkExtension(photo.filename):
-                extension = photo.filename.rsplit('.', 1)[1].lower() 
-                new_filename = str(uuid.uuid4()) + '.' + extension
-
-                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+            # Validação de email único (só se email foi alterado)
+            if 'user_email' in form_data and form_data['user_email'] != user.user_email:
+                existing_user = User.query.filter_by(user_email=form_data['user_email']).first()
+                if existing_user:
+                    flash('Este email já está sendo usado por outro usuário.', 'error')
+                    return redirect(url_for('user'))
+            
+            # Processamento da foto
+            new_filename = None
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename and checkExtension(photo.filename):
+                    extension = photo.filename.rsplit('.', 1)[1].lower()
+                    new_filename = str(uuid.uuid4()) + '.' + extension
+                    
+                    # Salva a nova foto
+                    photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+                    form_data['user_profile_photo'] = new_filename
+                    
+                    # Remove a foto antiga se existir
+                    if user.user_profile_photo:
+                        old_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], user.user_profile_photo)
+                        if os.path.exists(old_photo_path):
+                            try:
+                                os.remove(old_photo_path)
+                            except:
+                                pass  # Se não conseguir deletar, continua
+                    
+                elif photo and photo.filename:  # Se tem arquivo mas extensão inválida
+                    flash('Extensão de arquivo não suportada.', 'error')
+                    return redirect(url_for('user'))
+            
+            # Atualiza o usuário com os dados coletados
+            result = updateUser(user_id, **form_data)
+            
+            if result['success']:
+                if result.get('updated_fields'):
+                    flash(f'Dados atualizados com sucesso! {result["message"]}', 'success')
+                    
+                    # Atualiza a sessão se necessário
+                    updated_fields = result['updated_fields']
+                    if 'user_email' in updated_fields:
+                        session['user_email'] = updated_fields['user_email']
+                    if 'user_name' in updated_fields:
+                        session['user_name'] = updated_fields['user_name']
+                else:
+                    flash('Nenhuma alteração foi necessária.', 'info')
             else:
-                flash('Extensão de arquivo não suportada', 'error')
-                return redirect(url_for('user'))
-
-            if db.updateUser(id, email, name, phone, new_filename):
-                flash('Dados atualizados com sucesso!', 'success')
-                session['user_email'] = email if email else user[2]
-                session['user_name'] = name if name else user[1]
-                session['logged'] = 1
-
-                return redirect(url_for('user'))
-            else:
-                flash('Erro ao atualizar dados. Tente novamente.', 'error')
+                flash(f'Erro ao atualizar dados: {result.get("error", "Erro desconhecido")}', 'error')
+                
+        except Exception as e:
+            flash(f'Erro interno: {str(e)}', 'error')
+            
+        return redirect(url_for('user'))
 
     return render_template('user.html', user=user, cidades=cities)
 
@@ -242,7 +290,7 @@ def ong_register():
         if not photo:
             photo = None
 
-        if db.getOng(email):
+        if getOng(email):
             flash('Ong já existente', 'info')
             return redirect(url_for('index'))
         
@@ -253,7 +301,7 @@ def ong_register():
             # Salva o arquivo com o novo nome
             photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
 
-        if db.saveOng(name, phone, email, password, cpf, cep, city, hood, addr, num, new_filename, desc):
+        if saveOng(name, phone, email, password, cpf, cep, city, hood, addr, num, new_filename, desc):
             flash('Sucesso no cadastro.', 'info')
             return redirect(url_for('ong_login'))
         
@@ -284,13 +332,13 @@ def ong_login():
             email = request.form.get('email')
             password = request.form.get('pass')
 
-            if db.checkOng(email, password):
-                ong = db.getOng(email)
+            if checkOng(email, password):
+                ong = getOng(email)
                 
                 if ong: 
                     session['ong_logged'] = 1
-                    session['ong_id'] = ong[0]
-                    session['ong_email'] = email
+                    session['ong_id'] = ong.ong_id
+                    session['ong_email'] = ong.ong_email
 
                     flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
@@ -307,7 +355,7 @@ def ong_profile():
         flash('Você precisa estar logado como ONG para acessar esta página.', 'error')
         return redirect(url_for('ong_login'))
 
-    ong = db.getOng(session.get('ong_email'))
+    ong = getOng(session.get('ong_email'))
 
     if request.method == 'POST':
         if request.form.get('name') or request.form.get('city') or request.form.get('email') or request.form.get('desc'):
@@ -323,11 +371,11 @@ def ong_profile():
             desc = request.form.get('desc')
             photo = request.form.get('photo')
 
-            if ong[2] != email and db.getOng(email):
+            if ong.ong_email != email and getOng(email):
                 flash('Algum dado editado coincide com outro existente.', 'error')
                 return redirect(url_for('ong_profile'))
 
-            if db.updateOng(ong[0], email, name, city, desc):
+            if saveOng(session.get('ong_id'), name, phone, email, None, cpf, cep, city, hood, addr, num, photo, desc):
                 flash('Dados atualizados com sucesso!', 'success')
                 session['ong_email'] = email if email else ong[2]
                 session['ong_name'] = name if name else ong[1]
@@ -359,7 +407,7 @@ def rescue():
             if not photo:
                 photo = None
 
-            if db.saveRescue(desc, author, phone, cep, city, addr, num, photo, userId):
+            if saveRescue(desc, author, phone, cep, city, addr, num, photo, userId):
                 flash('Resgate registrado com sucesso!', 'success')
                 return redirect(url_for('index'))
             else:

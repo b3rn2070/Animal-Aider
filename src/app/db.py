@@ -17,6 +17,45 @@ class User(db.Model):
     user_num = db.Column(db.String)
     user_profile_photo = db.Column(db.String, default=None)
 
+    def update_fields(self, **kwargs):
+        """
+        Atualiza apenas os campos fornecidos que são diferentes dos atuais
+        """
+        updated_fields = {}
+        
+        for field, new_value in kwargs.items():
+            if hasattr(self, field) and new_value is not None:
+                current_value = getattr(self, field)
+                
+                # Só atualiza se o valor for diferente
+                if current_value != new_value and str(new_value).strip() != '':
+                    setattr(self, field, new_value)
+                    updated_fields[field] = new_value
+        
+        return updated_fields
+
+    def safe_update(self, data_dict, allowed_fields=None):
+        """
+        Update seguro com lista de campos permitidos
+        """
+        if allowed_fields is None:
+            allowed_fields = [
+                'user_name', 'user_email', 'user_phone', 'user_cep',
+                'user_city', 'user_address', 'user_num', 'user_profile_photo'
+            ]
+        
+        # Filtra apenas campos permitidos e não vazios
+        filtered_data = {k: v for k, v in data_dict.items() 
+                        if k in allowed_fields and v is not None and str(v).strip() != ''}
+        
+        updated_fields = self.update_fields(**filtered_data)
+        
+        return {
+            'success': len(updated_fields) > 0,
+            'updated_fields': updated_fields,
+            'total_changes': len(updated_fields)
+        }
+
 class Report(db.Model):
     __tablename__ = 'tbReport'
     rep_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -85,6 +124,32 @@ def saveUser(name, email, password, phone, cep, city, addr, num, photo=None):
     db.session.commit()
     return True
 
+def updateUser(user_id, **kwargs):
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return {'success': False, 'error': 'Usuário não encontrado'}
+        
+        result = user.safe_update(kwargs)
+        
+        if result['success']:
+            db.session.commit()
+            return {
+                'success': True,
+                'updated_fields': result['updated_fields'],
+                'message': f"{result['total_changes']} campo(s) atualizado(s)"
+            }
+        else:
+            return {
+                'success': True,
+                'message': 'Nenhuma alteração necessária',
+                'updated_fields': {}
+            }
+            
+    except Exception as e:
+        db.session.rollback()
+        return {'success': False, 'error': str(e)}
+
 def saveOng(name, phone, email, password, cpf, cep, city, hood, address, num, photo=None, desc=None):
     if Ong.query.filter_by(ong_email=email).first():
         return False
@@ -117,6 +182,18 @@ def checkUser(email, password):
         ph = PasswordHasher()
         try:
             if ph.verify(user.user_pass, password):
+                return True
+        except Exception as e:
+            print(f"Erro ao verificar senha: {e}")
+            return False
+    return False
+
+def checkOng(email, password):
+    ong = getOng(email)
+    if ong:
+        ph = PasswordHasher()
+        try:
+            if ph.verify(ong.ong_pass, password):
                 return True
         except Exception as e:
             print(f"Erro ao verificar senha: {e}")
