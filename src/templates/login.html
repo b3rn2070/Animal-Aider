@@ -1,17 +1,35 @@
 {% extends 'base.html' %}
 {% block conteudo %}
-    <form action="{{url_for('login')}}" method="POST" class="form-control">
-    <div>
-        <label for="email">Email:</label>
-        <input type="text" class="form-control" name="email" required/>
+<div class="container mt-5" style="max-width: 450px;">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body p-4">
+            <h2 class="text-center mb-4">Login<color: ></color:></h2>
+
+            <form action="{{ url_for('login') }}" method="POST">
+                <div class="mb-3">
+                    <label for="email" class="form-label fw-bold">Email</label>
+                    <input type="text" id="email" name="email" class="form-control" placeholder="Digite seu email" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label fw-bold">Senha</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Digite sua senha" required />
+                </div>
+
+                <button class="btn btn-success w-100">Entrar</button>
+            </form>
+
+            <hr class="my-4">
+
+            <p class="text-center mb-1">
+                Não tem uma conta?
+                <a href="{{ url_for('register') }}" class="text-decoration-none">Cadastre-se aqui</a>.
+            </p>
+            <p class="text-center">
+                Já registrou sua ONG?
+                <a href="{{ url_for('ong_login') }}" class="text-decoration-none">Entre aqui</a>.
+            </p>
+        </div>
     </div>
-    <div>
-        <label for="password">Senha:</label>
-        <input type="password" class="form-control" name="password" required/>
-    </div>
-    <button class="btn btn-success">Logar</button>
-</form>
-    <p>Não tem uma conta? <a href="{{url_for('register')}}">Cadastre-se aqui.</a></p>
-    <p>Já registrou sua ONG? <a href="{{ url_for('ong_login')}}"> Entre aqui.</a></p> 
-  
+</div>
 {% endblock conteudo %}
