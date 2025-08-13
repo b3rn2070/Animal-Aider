@@ -16,7 +16,7 @@ from db import *
 
 
 UPLOAD_FOLDER = 'src/static/uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 random_key = secrets.token_hex(16)
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
@@ -135,27 +135,50 @@ def report():
     hoje = dt.today()
     min_data = hoje - timedelta(days=2)
     max_data = hoje
-
-    max_data = max_data.strftime('%Y-%m-%d')
-    min_data = min_data.strftime('%Y-%m-%d')
+    
+    # Formatar datas para o HTML
+    max_data_str = max_data.strftime('%Y-%m-%d')
+    min_data_str = min_data.strftime('%Y-%m-%d')
     
     # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
     
     if request.method == 'GET':
-        return render_template('report.html', min_data=min_data, max_data=max_data, cities=cities)
+        return render_template('report.html', 
+                             min_data=min_data_str, 
+                             max_data=max_data_str, 
+                             cities=cities)
     
     # Processar POST
     try:
-        # Validação de campos obrigatórios
+        # Validação de campos obrigatórios básicos
         required_fields = ['title', 'desc', 'date', 'city']
         missing_fields = [field for field in required_fields 
                          if not request.form.get(field, '').strip()]
         
+        # Verificar se usuário está logado para validar telefone
+        user_logged = session.get('logged')
+        if not user_logged:
+            # Para usuários não logados, telefone é obrigatório
+            if not request.form.get('phone', '').strip():
+                missing_fields.append('phone')
+        
+        # Verificar se foto é obrigatória (conforme formulário)
+        photo = request.files('photo')
+        if not photo or not photo.filename:
+            flash('A foto do avistamento é obrigatória.', 'error')
+            return render_template('report.html', 
+                                 min_data=min_data_str, 
+                                 max_data=max_data_str, 
+                                 cities=cities)
+        
         if missing_fields:
             flash('Preencha todos os campos obrigatórios.', 'error')
-            return render_template('report.html', min_data=min_data, max_data=max_data, cities=cities)
+            return render_template('report.html', 
+                                 min_data=min_data_str, 
+                                 max_data=max_data_str, 
+                                 cities=cities)
         
         # Extração e limpeza dos dados
         data = {
@@ -163,16 +186,23 @@ def report():
             'desc': request.form.get('desc').strip(),
             'date': request.form.get('date').strip(),
             'city': request.form.get('city').strip(),
-            'email': request.form.get('email', '').strip() or None,
             'addr': request.form.get('addr', '').strip() or None,
-            'phone': request.form.get('phone', '').strip(),
-            'userId': request.form.get('userId') or None
         }
-      
-        # Processamento de foto usando função original
-        photo_filename = None
-        photo = request.files.get('photo')
         
+        # Dados específicos por tipo de usuário
+        if user_logged:
+            # Usuário logado - dados vêm da sessão
+            data['email'] = session.get('user_email')
+            data['phone'] = session.get('user_phone') 
+            data['userId'] = session.get('user_id')
+        else:
+            # Usuário anônimo - dados vêm do formulário
+            data['email'] = request.form.get('email', '').strip() or None
+            data['phone'] = request.form.get('phone', '').strip()
+            data['userId'] = None
+        
+        # Processamento de foto (obrigatória)
+        photo_filename = None
         if photo and checkExtension(photo.filename):
             try:
                 extension = photo.filename.rsplit('.', 1)[1].lower()
@@ -185,10 +215,19 @@ def report():
             except Exception as e:
                 logging.error(f"Erro no upload: {e}")
                 flash('Erro ao fazer upload da imagem.', 'error')
-                return render_template('report.html', min_data=min_data, max_data=max_data, cities=cities)
+                return render_template('report.html', 
+                                     min_data=min_data_str, 
+                                     max_data=max_data_str, 
+                                     cities=cities)
+        else:
+            flash('Formato de imagem inválido. Use apenas PNG, JPG, JPEG ou GIF.', 'error')
+            return render_template('report.html', 
+                                 min_data=min_data_str, 
+                                 max_data=max_data_str, 
+                                 cities=cities)
         
         # Salvar no banco
-        if saveReport(
+        if db.saveReport(
             title=data['title'],
             desc=data['desc'],
             city=data['city'],
@@ -199,7 +238,10 @@ def report():
             addr=data['addr'],
             userId=data['userId']
         ):
-            flash('Relatório enviado com sucesso!', 'success')
+            if user_logged:
+                flash('Relatório enviado com sucesso!', 'success')
+            else:
+                flash('Denúncia anônima enviada com sucesso!', 'success')
             return redirect(url_for('index'))
         else:
             # Remove arquivo se salvamento falhou
@@ -214,7 +256,10 @@ def report():
         logging.error(f"Erro na rota report: {e}")
         flash('Erro interno. Tente novamente.', 'error')
     
-    return render_template('report.html', min_data=min_data, max_data=max_data, cities=cities)
+    return render_template('report.html', 
+                         min_data=min_data_str, 
+                         max_data=max_data_str, 
+                         cities=cities)
 
 #lembrar de tirar isso depois
 @app.route('/ver_dados')

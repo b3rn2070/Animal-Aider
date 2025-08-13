@@ -280,6 +280,7 @@ def saveReport(title, desc, city, date, phone, photo, email=None, addr=None, use
         # Validação adicional no nível de dados
         if not all([title, desc, city, date, phone, photo]):
             logging.error("Campos obrigatórios ausentes")
+            print(title, desc, city, date, phone, photo)
             return False
         
         # Conversão de userId se necessário
