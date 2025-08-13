@@ -1,8 +1,19 @@
-from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
+import os
+import uuid
+import logging
+import secrets
+import requests
+
+from datetime import datetime, date, timedelta
+
+from flask import (
+    Flask, request, render_template, session,
+    redirect, url_for, flash, jsonify
+)
+
 from extensions import db
 from db import *
-from datetime import date as dt, timedelta
-import secrets, requests, uuid, os
+
 
 UPLOAD_FOLDER = 'src/static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
@@ -30,7 +41,6 @@ cities = [cidade['nome'] for cidade in data]
 
 def checkExtension(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 @app.route("/")
 def index():
@@ -119,52 +129,92 @@ def register():
             flash('Erro ao registrar usuário. Verifique os dados.', 'error')
     return render_template('register.html', cities=cities)
 
-@app.route("/report", methods=['POST', 'GET']) #lembrar de colocar forma de enviar a foto depois
+@app.route("/report", methods=['POST', 'GET'])
 def report():
+    # Cache das datas
     hoje = dt.today()
     min_data = hoje - timedelta(days=2)
     max_data = hoje
 
+    max_data = max_data.strftime('%Y-%m-%d')
+    min_data = min_data.strftime('%Y-%m-%d')
+    
+    # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        if request.form.get('title') and request.form.get('desc') and request.form.get('date') and request.form.get('city'):
-            title = request.form.get('title')
-            desc = request.form.get('desc')
-            date = request.form.get('date')
-            email = request.form.get('email')
-            city = request.form.get('city')
-            addr = request.form.get('addr')
-            phone = request.form.get('phone')
-            photo = request.files('photo')
-            userId = request.form.get('userId')
-            
-            if not userId:
-                userId = None
-            if not email:
-                email = None
-            if not addr:
-                addr = None
-
-
-            if photo and checkExtension(photo.filename):
-
-                extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
-                new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
-
-                # Salva o arquivo com o novo nome
-                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
-
-                if saveReport(title, desc, city, date, phone, new_filename, email, addr, userId):
-                    flash('Relatório enviado com sucesso!', 'success')
-                    return redirect(url_for('index'))
-                else:
-                    flash('Erro ao enviar relatório. Tente novamente.', 'error')
+    
+    if request.method == 'GET':
+        return render_template('report.html', min_data=min_data, max_data=max_data, cities=cities)
+    
+    # Processar POST
+    try:
+        # Validação de campos obrigatórios
+        required_fields = ['title', 'desc', 'date', 'city']
+        missing_fields = [field for field in required_fields 
+                         if not request.form.get(field, '').strip()]
+        
+        if missing_fields:
+            flash('Preencha todos os campos obrigatórios.', 'error')
+            return render_template('report.html', min_data=min_data, max_data=max_data, cities=cities)
+        
+        # Extração e limpeza dos dados
+        data = {
+            'title': request.form.get('title').strip(),
+            'desc': request.form.get('desc').strip(),
+            'date': request.form.get('date').strip(),
+            'city': request.form.get('city').strip(),
+            'email': request.form.get('email', '').strip() or None,
+            'addr': request.form.get('addr', '').strip() or None,
+            'phone': request.form.get('phone', '').strip(),
+            'userId': request.form.get('userId') or None
+        }
+      
+        # Processamento de foto usando função original
+        photo_filename = None
+        photo = request.files.get('photo')
+        
+        if photo and checkExtension(photo.filename):
+            try:
+                extension = photo.filename.rsplit('.', 1)[1].lower()
+                photo_filename = str(uuid.uuid4()) + '.' + extension
+                
+                # Cria diretório se não existir
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+            except Exception as e:
+                logging.error(f"Erro no upload: {e}")
+                flash('Erro ao fazer upload da imagem.', 'error')
+                return render_template('report.html', min_data=min_data, max_data=max_data, cities=cities)
+        
+        # Salvar no banco
+        if saveReport(
+            title=data['title'],
+            desc=data['desc'],
+            city=data['city'],
+            date=data['date'],
+            phone=data['phone'],
+            photo=photo_filename,
+            email=data['email'],
+            addr=data['addr'],
+            userId=data['userId']
+        ):
+            flash('Relatório enviado com sucesso!', 'success')
+            return redirect(url_for('index'))
         else:
-            flash('Preencha todos os campos do relatório.', 'error')
-
-    return render_template('report.html', min_data=min_data.isoformat(), max_data=max_data.isoformat(), cities=cities)
+            # Remove arquivo se salvamento falhou
+            if photo_filename:
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+                except:
+                    pass
+            flash('Erro ao salvar relatório. Tente novamente.', 'error')
+    
+    except Exception as e:
+        logging.error(f"Erro na rota report: {e}")
+        flash('Erro interno. Tente novamente.', 'error')
+    
+    return render_template('report.html', min_data=min_data, max_data=max_data, cities=cities)
 
 #lembrar de tirar isso depois
 @app.route('/ver_dados')

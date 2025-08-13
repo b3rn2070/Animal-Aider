@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime as dt, timedelta, datetime
 from argon2 import PasswordHasher
+import logging
+from sqlalchemy.exc import SQLAlchemyError
 
 db = SQLAlchemy()
 
@@ -58,17 +60,24 @@ class User(db.Model):
 
 class Report(db.Model):
     __tablename__ = 'tbReport'
+    __table_args__ = {'extend_existing': True}  # Permite redefinir tabela existente
+    
     rep_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    rep_title = db.Column(db.String, nullable=False)
-    rep_desc = db.Column(db.String)
-    rep_city = db.Column(db.String)
-    rep_address = db.Column(db.String)
-    rep_date = db.Column(db.DateTime, default=datetime.utcnow)
-    rep_phone = db.Column(db.String, default=None)
-    rep_email = db.Column(db.String, default=None)
-    rep_resolved = db.Column(db.Boolean, default=False)
-    rep_photo = db.Column(db.String, default=None)
-    rep_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'))
+    rep_title = db.Column(db.String(255), nullable=False, index=True)  # Índice para busca
+    rep_desc = db.Column(db.Text)  # Text para descrições longas
+    rep_city = db.Column(db.String(100), index=True)  # Índice para filtros por cidade
+    rep_address = db.Column(db.String(255))
+    rep_date = db.Column(db.DateTime, nullable=False, index=True)  # Índice para ordenação
+    rep_phone = db.Column(db.String(20))
+    rep_email = db.Column(db.String(100))
+    rep_resolved = db.Column(db.Boolean, default=False, index=True)  # Índice para filtros
+    rep_photo = db.Column(db.String(255))
+    rep_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
+    rep_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
+    rep_updated_at = db.Column(db.DateTime, default=dt.utcnow, onupdate=dt.utcnow)  # Timestamp de atualização
+    
+    def __repr__(self):
+        return f'<Report {self.rep_id}: {self.rep_title}>'
 
 class Ong(db.Model):
     __tablename__ = 'tbOngs'
@@ -266,21 +275,46 @@ def checkOng(email, password):
             return False
     return False
 
-def saveReport(title, desc, city, date, phone, photo=None, email=None, addr=None, userId=None):
-    report = Report(
-        rep_title=title,
-        rep_desc=desc,
-        rep_city=city,
-        rep_address=addr,
-        rep_date=datetime.strptime(date, '%Y-%m-%d'),
-        rep_phone=phone,
-        rep_email=email,
-        rep_photo=photo,
-        rep_user_id=userId
-    )
-    db.session.add(report)
-    db.session.commit()
-    return True
+def saveReport(title, desc, city, date, phone, photo, email=None, addr=None, userId=None):
+    try:
+        # Validação adicional no nível de dados
+        if not all([title, desc, city, date, phone, photo]):
+            logging.error("Campos obrigatórios ausentes")
+            return False
+        
+        # Conversão de userId se necessário
+        if userId:
+            try:
+                userId = int(userId)
+            except (ValueError, TypeError):
+                userId = None
+        
+        report = Report(
+            rep_title=title[:255],  # Limita tamanho
+            rep_desc=desc[:1000],   # Limita tamanho
+            rep_city=city[:100],    # Limita tamanho
+            rep_address=addr[:255] if addr else None,
+            rep_date=dt.strptime(date, '%Y-%m-%d'),
+            rep_phone=phone[:20],   # Limita tamanho
+            rep_email=email[:100] if email else None,
+            rep_photo=photo,
+            rep_user_id=userId if userId else None
+        )
+        
+        db.session.add(report)
+        db.session.commit()
+        
+        logging.info(f"Relatório salvo com sucesso - ID: {report.rep_id}")
+        return True
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logging.error(f"Erro SQLAlchemy: {e}")
+        return False
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao salvar relatório: {e}")
+        return False
 
 def saveRescue(desc, author, phone, cep, city, addr, num, photo=None, userId=None):
     rescue = Rescue(
