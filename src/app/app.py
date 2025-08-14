@@ -545,13 +545,6 @@ def ong_profile():
 
     return render_template('ong_profile.html', cities=cities, ong=ong)
 
-from flask import request, session, redirect, url_for, render_template, flash
-from datetime import datetime as dt
-import uuid
-import os
-from sqlalchemy.exc import SQLAlchemyError
-import logging
-
 @app.route('/rescue', methods=['GET', 'POST'])
 def rescue():
     # Redirect para ONGs logadas
