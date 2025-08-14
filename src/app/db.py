@@ -139,18 +139,25 @@ class Ong(db.Model):
 
 class Rescue(db.Model):
     __tablename__ = 'tbRescues'
+    __table_args__ = {'extend_existing': True}  # Permite redefinir tabela existente
+    
     resc_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    resc_date = db.Column(db.DateTime, default=datetime.utcnow)
-    resc_desc = db.Column(db.String)
-    resc_photo = db.Column(db.String)
-    resc_author = db.Column(db.String)
-    resc_phone = db.Column(db.String, default=None)
-    resc_cep = db.Column(db.String)
-    resc_city = db.Column(db.String)
-    resc_addr = db.Column(db.String)
-    resc_num = db.Column(db.String)
-    resc_resolved = db.Column(db.Boolean, default=False)
-    resc_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'))
+    resc_date = db.Column(db.DateTime, default=dt.utcnow, index=True)  # Índice para ordenação
+    resc_desc = db.Column(db.Text, nullable=False)  # Text para descrições longas
+    resc_photo = db.Column(db.String(255))
+    resc_author = db.Column(db.String(100), nullable=False)
+    resc_phone = db.Column(db.String(20), nullable=False)
+    resc_cep = db.Column(db.String(10))
+    resc_city = db.Column(db.String(100), nullable=False, index=True)  # Índice para filtros
+    resc_addr = db.Column(db.String(255))
+    resc_num = db.Column(db.String(20))
+    resc_resolved = db.Column(db.Boolean, default=False, index=True)  # Índice para filtros
+    resc_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
+    resc_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
+    resc_updated_at = db.Column(db.DateTime, default=dt.utcnow, onupdate=dt.utcnow)  # Timestamp de atualização
+    
+    def __repr__(self):
+        return f'<Rescue {self.resc_id}: {self.resc_author} - {self.resc_city}>'
 
 # Funções de CRUD
 def saveUser(name, email, password, phone, cep, city, addr, num, photo=None):
@@ -275,12 +282,12 @@ def checkOng(email, password):
             return False
     return False
 
-def saveReport(title, desc, city, date, phone, photo, email=None, addr=None, userId=None):
+def saveReport(title, desc, city, date, phone, photo=None, email=None, addr=None, userId=None):
     try:
-        # Validação adicional no nível de dados
-        if not all([title, desc, city, date, phone, photo]):
+        # Validação adicional no nível de dados (photo não é obrigatório aqui)
+        if not all([title, desc, city, date, phone]):
             logging.error("Campos obrigatórios ausentes")
-            print(title, desc, city, date, phone, photo)
+            print(f"Campos: title={title}, desc={desc}, city={city}, date={date}, phone={phone}")
             return False
         
         # Conversão de userId se necessário
@@ -298,7 +305,7 @@ def saveReport(title, desc, city, date, phone, photo, email=None, addr=None, use
             rep_date=dt.strptime(date, '%Y-%m-%d'),
             rep_phone=phone[:20],   # Limita tamanho
             rep_email=email[:100] if email else None,
-            rep_photo=photo,
+            rep_photo=photo,  # Pode ser None
             rep_user_id=userId if userId else None
         )
         
@@ -317,21 +324,47 @@ def saveReport(title, desc, city, date, phone, photo, email=None, addr=None, use
         logging.error(f"Erro ao salvar relatório: {e}")
         return False
 
-def saveRescue(desc, author, phone, cep, city, addr, num, photo=None, userId=None):
-    rescue = Rescue(
-        resc_desc=desc,
-        resc_photo=photo,
-        resc_author=author,
-        resc_phone=phone,
-        resc_cep=cep,
-        resc_city=city,
-        resc_addr=addr,
-        resc_num=num,
-        resc_user_id=userId
-    )
-    db.session.add(rescue)
-    db.session.commit()
-    return True
+def saveRescue(desc, author, phone, cep, city, addr=None, num=None, photo=None, userId=None):
+    try:
+        # Validação adicional no nível de dados
+        if not all([desc, author, phone, city]):
+            logging.error("Campos obrigatórios ausentes no resgate")
+            print(f"Campos: desc={desc}, author={author}, phone={phone}, city={city}")
+            return False
+        
+        # Conversão de userId se necessário
+        if userId:
+            try:
+                userId = int(userId)
+            except (ValueError, TypeError):
+                userId = None
+        
+        rescue = Rescue(
+            resc_desc=desc[:1000],  # Limita tamanho
+            resc_author=author[:100],  # Limita tamanho
+            resc_phone=phone[:20],  # Limita tamanho
+            resc_cep=cep[:10] if cep else None,  # Limita tamanho
+            resc_city=city[:100],  # Limita tamanho
+            resc_addr=addr[:255] if addr else None,  # Limita tamanho
+            resc_num=num[:20] if num else None,  # Limita tamanho
+            resc_photo=photo,  # Pode ser None
+            resc_user_id=userId if userId else None
+        )
+        
+        db.session.add(rescue)
+        db.session.commit()
+        
+        logging.info(f"Resgate salvo com sucesso - ID: {rescue.resc_id}")
+        return True
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logging.error(f"Erro SQLAlchemy no resgate: {e}")
+        return False
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao salvar resgate: {e}")
+        return False
 
 def showAllReports():
     return Report.query.all()

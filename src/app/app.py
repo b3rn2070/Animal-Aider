@@ -4,7 +4,7 @@ import logging
 import secrets
 import requests
 
-from datetime import datetime, date, timedelta
+from datetime import timedelta
 
 from flask import (
     Flask, request, render_template, session,
@@ -165,7 +165,7 @@ def report():
                 missing_fields.append('phone')
         
         # Verificar se foto é obrigatória (conforme formulário)
-        photo = request.files('photo')
+        photo = request.files['photo']
         if not photo or not photo.filename:
             flash('A foto do avistamento é obrigatória.', 'error')
             return render_template('report.html', 
@@ -227,7 +227,7 @@ def report():
                                  cities=cities)
         
         # Salvar no banco
-        if db.saveReport(
+        if saveReport(
             title=data['title'],
             desc=data['desc'],
             city=data['city'],
@@ -545,35 +545,112 @@ def ong_profile():
 
     return render_template('ong_profile.html', cities=cities, ong=ong)
 
+from flask import request, session, redirect, url_for, render_template, flash
+from datetime import datetime as dt
+import uuid
+import os
+from sqlalchemy.exc import SQLAlchemyError
+import logging
+
 @app.route('/rescue', methods=['GET', 'POST'])
 def rescue():
+    # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        if  request.form.get('desc') and request.form.get('city'): 
-            desc = request.form.get('desc')
-            city = request.form.get('city')
-            addr = request.form.get('address')
-            num = request.form.get('num')
-            phone = request.form.get('phone')
-            author = request.form.get('author')
-            userId = request.form.get('userId')
-            cep = request.form.get('cep')
-            photo = request.form.get('photo')
-            
-            if not photo:
-                photo = None
-
-            if saveRescue(desc, author, phone, cep, city, addr, num, photo, userId):
-                flash('Resgate registrado com sucesso!', 'success')
-                return redirect(url_for('index'))
-            else:
-                flash('Erro ao registrar resgate. Tente novamente.', 'error')
+    
+    if request.method == 'GET':
+        return render_template('rescue.html', cities=cities)
+    
+    # Processar POST
+    try:
+        # Validação de campos obrigatórios básicos
+        required_fields = ['desc', 'city']
+        missing_fields = [field for field in required_fields 
+                         if not request.form.get(field, '').strip()]
+        
+        # Verificar se usuário está logado para validar campos adicionais
+        user_logged = session.get('logged')
+        if not user_logged:
+            # Para usuários não logados, campos adicionais são obrigatórios
+            additional_required = ['author', 'phone']
+            for field in additional_required:
+                if not request.form.get(field, '').strip():
+                    missing_fields.append(field)
+        
+        if missing_fields:
+            flash('Preencha todos os campos obrigatórios.', 'error')
+            return render_template('rescue.html', cities=cities)
+        
+        # Extração e limpeza dos dados
+        data = {
+            'desc': request.form.get('desc').strip(),
+            'city': request.form.get('city').strip(),
+            'addr': request.form.get('address', '').strip() or None,
+            'num': request.form.get('num', '').strip() or None,
+            'cep': request.form.get('cep', '').strip() or None,
+        }
+        
+        # Dados específicos por tipo de usuário
+        if user_logged:
+            # Usuário logado - dados vêm da sessão (assumindo que existam na sessão)
+            data['author'] = session.get('user_name') or session.get('user_email', 'Usuário Logado')
+            data['phone'] = session.get('user_phone')
+            data['userId'] = session.get('user_id')
         else:
-            flash('Preencha todos os campos do resgate.', 'error')
-
-    return render_template('rescue.html')
+            # Usuário anônimo - dados vêm do formulário
+            data['author'] = request.form.get('author').strip()
+            data['phone'] = request.form.get('phone').strip()
+            data['userId'] = None
+        
+        # Processamento de foto (opcional)
+        photo_filename = None
+        photo = request.files.get('photo')
+        
+        if photo and photo.filename and checkExtension(photo.filename):
+            try:
+                extension = photo.filename.rsplit('.', 1)[1].lower()
+                photo_filename = str(uuid.uuid4()) + '.' + extension
+                
+                # Cria diretório se não existir
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+            except Exception as e:
+                logging.error(f"Erro no upload de foto do resgate: {e}")
+                flash('Erro ao fazer upload da imagem.', 'error')
+                return render_template('rescue.html', cities=cities)
+        
+        # Salvar no banco
+        if saveRescue(
+            desc=data['desc'],
+            author=data['author'],
+            phone=data['phone'],
+            cep=data['cep'],
+            city=data['city'],
+            addr=data['addr'],
+            num=data['num'],
+            photo=photo_filename,
+            userId=data['userId']
+        ):
+            if user_logged:
+                flash('Resgate registrado com sucesso!', 'success')
+            else:
+                flash('Resgate anônimo registrado com sucesso!', 'success')
+            return redirect(url_for('index'))
+        else:
+            # Remove arquivo se salvamento falhou
+            if photo_filename:
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+                except:
+                    pass
+            flash('Erro ao registrar resgate. Tente novamente.', 'error')
+    
+    except Exception as e:
+        logging.error(f"Erro na rota rescue: {e}")
+        flash('Erro interno. Tente novamente.', 'error')
+    
+    return render_template('rescue.html', cities=cities)
 
 if __name__ == "__main__":
     app.run(debug=True)

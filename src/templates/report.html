@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 <h1>Relatório de Denúncia</h1>
-<form action="{{ url_for('report') }}" method="post" class="form-control">
+<form action="{{ url_for('report') }}" method="post" class="form-control" enctype="multipart/form-data">
     <div>
         <label for="title">Título:</label>
         <input type="text" class="form-control" name="title" required />
