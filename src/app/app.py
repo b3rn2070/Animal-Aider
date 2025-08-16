@@ -597,7 +597,7 @@ def rescue():
         
         # Processamento de foto (opcional)
         photo_filename = None
-        photo = request.files.get('photo')
+        photo = request.files['photo']
         
         if photo and photo.filename and checkExtension(photo.filename):
             try:

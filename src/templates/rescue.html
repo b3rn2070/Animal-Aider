@@ -1,76 +1,77 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 <form action="{{ url_for('rescue')}}" method="post" enctype="multipart/form-data">
-    {% if session.get('logged') %} 
-        <input type="hidden" name="userId" value="{{ session.get('user_id') }}">
-        <input type="hidden" name="author" value="{{ session.get('user_name') }}">
-        <input type="hidden" name="phone" value="{{ session.get('user_phone') }}">
-        <input type="hidden" name="cep" value="{{ session.get('user_cep') }}">
-        <input type="hidden" name="city" value="{{ session.get('user_city') }}">
-        <input type="hidden" name="address" value="{{ session.get('user_addr') }}">
-        <input type="hidden" name="num" value="{{ session.get('user_num') }}">
-    {% endif %}
-    {% if not session.get('logged') %}
-        <div>
-            <label for="cep">CEP:</label>
-            <input type="text" name="cep" id="cep" required>
-        </div>
-        <div>
-            <label for="addr">Endereço:</label>
-            <input type="text" name="addr" id="addr" required>
-        </div>
-        <div>
-            <label for="num">Número:</label>
-            <input type="text" name="num" required>
-        </div>
-        <div>
-            <label for="name">Autor:</label>
-            <input type="text" name="name" required>
-        </div>
-        <div>
-            <label for="phone">Telefone para contato:</label>
-            <input type="tel" name="phone" required>
-        </div>
-        <div>
-            <label for="desc">Descrição:</label>
-            <textarea name="desc" required></textarea>
-        </div>
-        <div>
-            <label for="photo">Foto do animal:</label>
-            <input type="file" name="photo" accept="image/*" required>
-        </div>
-    {% elif session.get('logged') == 1 %}
+    
+    <!-- Campos sempre obrigatórios -->
     <div>
         <label for="desc">Descrição:</label>
-        <textarea class="form-control" name="desc" required></textarea>
+        <textarea class="form-control" name="desc" id="desc" required></textarea>
     </div>
+    
     <div>
-        <label for="photo">Foto do animal (opcional):</label>
-        <input type="file" name="photo" accept="image/*">
+        <label for="city">Cidade:</label>
+        <select name="city" id="city" class="form-control" required>
+            <option value="">Selecione uma cidade</option>
+            {% for city in cities %}
+                <option value="{{ city }}">{{ city }}</option>
+            {% endfor %}
+        </select>
     </div>
+    
+    <!-- Campos opcionais de endereço -->
+    <div>
+        <label for="cep">CEP:</label>
+        <input type="text" name="cep" id="cep" class="form-control">
+    </div>
+    
+    <div>
+        <label for="addr">Endereço:</label>
+        <input type="text" name="addr" id="addr" class="form-control">
+    </div>
+    
+    <div>
+        <label for="num">Número:</label>
+        <input type="text" name="num" id="num" class="form-control">
+    </div>
+    
+    <!-- Campos condicionais baseados no login -->
+    {% if not session.get('logged') %}
+        <!-- Para usuários NÃO logados - campos obrigatórios -->
+        <div>
+            <label for="author">Nome do autor:</label>
+            <input type="text" name="author" id="author" class="form-control" required>
+        </div>
+        
+        <div>
+            <label for="phone">Telefone para contato:</label>
+            <input type="tel" name="phone" id="phone" class="form-control" required>
+        </div>
+        
+        <div>
+            <label for="photo">Foto do animal:</label>
+            <input type="file" name="photo" id="photo" class="form-control" accept="image/*" required>
+        </div>
+        
+    {% else %}
+        <!-- Para usuários logados -->
+        <div>
+            <label for="photo">Foto do animal:</label>
+            <input type="file" name="photo" id="photo" class="form-control" accept="image/*" required>
+        </div>
+        
+        <!-- Informações do usuário logado são obtidas da sessão no backend -->
+        <div class="alert alert-info">
+            <strong>Dados do usuário:</strong><br>
+            Nome: {{ session.get('user_name', 'Não informado') }}<br>
+            {% if session.get('user_phone') %}
+                Telefone: {{ session.get('user_phone') }}<br>
+            {% endif %}
+        </div>
     {% endif %}
+    
     <div>
-        <button type="submit">Enviar</button>
+        <button type="submit" class="btn btn-primary">Registrar Resgate</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
     </div>
 </form>
-<script>
-    document.getElementById('cep').addEventListener('blur', function () {
-        const cep = this.value.replace(/\D/g, '');
-
-        if (cep.length === 8) {
-            fetch(`/get_address/${cep}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.erro) {
-                        document.getElementById('addr').value = data.logradouro || '';
-                        document.getElementById('city').value = data.localidade || '';
-                    } else {
-                        alert('CEP não encontrado.');
-                    }
-                })
-                .catch(() => alert('Erro ao buscar o endereço.'));
-        }
-    });
-
-</script>
 {% endblock conteudo %}
