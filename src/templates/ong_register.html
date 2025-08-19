@@ -1,57 +1,88 @@
 {% extends 'base.html' %}
 {% block conteudo %}
-    <form action="{{url_for('ong_register')}}" method="POST" enctype="multipart/form-data">
-        <div>
-            <label for="name">Nome:</label>
-            <input type="text" name="name" required/>
-        </div>
-        <div>
-            <label for="email">Email:</label>
-            <input type="email" name="email" required/>
-        </div>
-        <div>
-            <label for="password">Senha:</label>
-            <input type="password" name="password" required/>
-        </div>
-        <div>
-            <label for="phone">Telefone:</label>
-            <input type="tel" name="phone" required/>
-        </div>
-        <div>
-            <label for="cep">CEP:</label>
-            <input type="text" name="cep" id="cep" required/>
-        </div>
-        <div>
-            <label for="city">Cidade:</label>
-            <input type="text" id="city" name="city" required/>
-        </div>
-        <div>
-            <label for="hood">Bairro:</label>
-            <input type="text" id="hood" name="hood" required/>
-        </div>
-        <div>
-            <label for="addr">Endereço:</label>
-            <input type="text" id="addr" name="addr" required/>
-        </div>
-        <div>
-            <label for="num">Número:</label>
-            <input type="text" name="num" maxlength="12" required/>
-        </div>
-        <div>
-            <label for="desc">Descrição (opcional)</label>
-            <input type="text" name="desc"/>
-        </div>
-        <div>
-            <label for="cpf">CPF do responsável:</label>
-            <input type="text" name="cpf" maxlength="11" id="cpf" required/>
-        </div>
-        <div>
-            <label for="photo">Foto de perfil:</label>
-            <input type="file" name="photo" required>
-        </div>
-        <button class="btn btn-success">Registrar</button>
+<div class="container my-5" style="max-width: 600px;">
+  <div class="p-4 bg-white rounded shadow-sm">
+    <h2 class="mb-4 text-center text-primary">Registro de ONG</h2>
+
+    <form action="{{url_for('ong_register')}}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+      <div class="mb-3">
+        <label for="name" class="form-label fw-semibold">Nome:</label>
+        <input type="text" id="name" name="name" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira o nome da ONG.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="email" class="form-label fw-semibold">Email:</label>
+        <input type="email" id="email" name="email" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira um email válido.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label fw-semibold">Senha:</label>
+        <input type="password" id="password" name="password" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira uma senha.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="phone" class="form-label fw-semibold">Telefone:</label>
+        <input type="tel" id="phone" name="phone" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira um telefone válido.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="cep" class="form-label fw-semibold">CEP:</label>
+        <input type="text" id="cep" name="cep" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira o CEP.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="city" class="form-label fw-semibold">Cidade:</label>
+        <input type="text" id="city" name="city" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira a cidade.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="hood" class="form-label fw-semibold">Bairro:</label>
+        <input type="text" id="hood" name="hood" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira o bairro.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="addr" class="form-label fw-semibold">Endereço:</label>
+        <input type="text" id="addr" name="addr" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira o endereço.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="num" class="form-label fw-semibold">Número:</label>
+        <input type="text" id="num" name="num" maxlength="12" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira o número.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="desc" class="form-label fw-semibold">Descrição (opcional):</label>
+        <input type="text" id="desc" name="desc" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <label for="cpf" class="form-label fw-semibold">CPF do responsável:</label>
+        <input type="text" id="cpf" name="cpf" maxlength="11" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira o CPF do responsável.</div>
+      </div>
+
+      <div class="mb-4">
+        <label for="photo" class="form-label fw-semibold">Foto de perfil:</label>
+        <input type="file" id="photo" name="photo" class="form-control" required>
+        <div class="invalid-feedback">Por favor, anexe uma foto de perfil.</div>
+      </div>
+
+      <button type="submit" class="btn btn-success w-100">Registrar</button>
     </form>
-    <div>
-        <p>Já registrou sua ONG? <a href="{{ url_for('ong_login')}}"> entre aqui.</a></p> 
-    </div>
+
+    <p class="mt-3 text-center">
+      Já registrou sua ONG? <a href="{{ url_for('ong_login') }}">Entre aqui.</a>
+    </p>
+  </div>
+</div>
 {% endblock conteudo %}
+
