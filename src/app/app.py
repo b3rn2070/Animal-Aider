@@ -645,5 +645,59 @@ def rescue():
     
     return render_template('rescue.html', cities=cities)
 
+# Rota para listar denúncias do usuário
+@app.route('/user_reports')
+def user_reports():
+    # Verificar se usuário está logado
+    if not session.get('logged'):
+        flash('Você precisa estar logado para ver suas denúncias.', 'error')
+        return redirect(url_for('login'))
+    
+    # Redirect para ONGs logadas
+    if session.get('ong_logged'):
+        return redirect(url_for('index'))
+    
+    try:
+        user_id = session.get('user_id')
+        
+        # Buscar denúncias do usuário ordenadas por data (mais recentes primeiro)
+        reports = Report.query.filter_by(rep_user_id=user_id)\
+                             .order_by(Report.rep_created_at.desc())\
+                             .all()
+        
+        return render_template('user_reports.html', reports=reports)
+    
+    except Exception as e:
+        logging.error(f"Erro ao carregar denúncias do usuário: {e}")
+        flash('Erro ao carregar suas denúncias.', 'error')
+        return redirect(url_for('index'))
+    
+# Rota para listar resgates do usuário
+@app.route('/user_rescues')
+def user_rescues():
+    # Verificar se usuário está logado
+    if not session.get('logged'):
+        flash('Você precisa estar logado para ver seus resgates.', 'error')
+        return redirect(url_for('login'))
+    
+    # Redirect para ONGs logadas
+    if session.get('ong_logged'):
+        return redirect(url_for('index'))
+    
+    try:
+        user_id = session.get('user_id')
+        
+        # Buscar resgates do usuário ordenados por data (mais recentes primeiro)
+        rescues = Rescue.query.filter_by(resc_user_id=user_id)\
+                             .order_by(Rescue.resc_created_at.desc())\
+                             .all()
+        
+        return render_template('user_rescues.html', rescues=rescues)
+    
+    except Exception as e:
+        logging.error(f"Erro ao carregar resgates do usuário: {e}")
+        flash('Erro ao carregar seus resgates.', 'error')
+        return redirect(url_for('index'))
+
 if __name__ == "__main__":
     app.run(debug=True)

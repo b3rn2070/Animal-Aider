@@ -70,11 +70,10 @@ class Report(db.Model):
     rep_date = db.Column(db.DateTime, nullable=False, index=True)  # Índice para ordenação
     rep_phone = db.Column(db.String(20))
     rep_email = db.Column(db.String(100))
-    rep_resolved = db.Column(db.Boolean, default=False, index=True)  # Índice para filtros
+    rep_status = db.Column(db.String(20), default='pendente', nullable=False, index=True)
     rep_photo = db.Column(db.String(255))
     rep_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
     rep_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
-    rep_updated_at = db.Column(db.DateTime, default=dt.utcnow, onupdate=dt.utcnow)  # Timestamp de atualização
     
     def __repr__(self):
         return f'<Report {self.rep_id}: {self.rep_title}>'
@@ -151,10 +150,9 @@ class Rescue(db.Model):
     resc_city = db.Column(db.String(100), nullable=False, index=True)  # Índice para filtros
     resc_addr = db.Column(db.String(255))
     resc_num = db.Column(db.String(20))
-    resc_resolved = db.Column(db.Boolean, default=False, index=True)  # Índice para filtros
+    resc_status = db.Column(db.String(20), default='pendente', nullable=False, index=True)
     resc_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
     resc_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
-    resc_updated_at = db.Column(db.DateTime, default=dt.utcnow, onupdate=dt.utcnow)  # Timestamp de atualização
     
     def __repr__(self):
         return f'<Rescue {self.resc_id}: {self.resc_author} - {self.resc_city}>'

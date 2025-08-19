@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Denúncias - PetSafe</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .report-card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .report-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        .status-pendente {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-em-analise {
+            background-color: #cce5ff;
+            color: #0066cc;
+            border: 1px solid #99d6ff;
+        }
+        
+        .status-resolvida {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-rejeitada {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1b0b7;
+        }
+        
+        .report-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .report-meta {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-new-report {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            color: white;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        
+        .btn-new-report:hover {
+            transform: translateY(-1px);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-clipboard-list me-3"></i>
+                        Minhas Denúncias
+                    </h1>
+                    <p class="mb-0 opacity-75">Acompanhe o status das suas denúncias de animais em situação de risco</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{{ url_for('report') }}" class="btn-new-report">
+                        <i class="fas fa-plus me-2"></i>Nova Denúncia
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Estatísticas Rápidas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center border-0 bg-primary text-white">
+                    <div class="card-body">
+                        <h3 class="mb-1">{{ reports|length }}</h3>
+                        <small>Total de Denúncias</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-0 bg-warning text-dark">
+                    <div class="card-body">
+                        <h3 class="mb-1">{{ reports|selectattr('rep_status', 'equalto', 'pendente')|list|length }}</h3>
+                        <small>Pendentes</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-0 bg-info text-white">
+                    <div class="card-body">
+                        <h3 class="mb-1">{{ reports|selectattr('rep_status', 'equalto', 'em-analise')|list|length }}</h3>
+                        <small>Em Análise</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-0 bg-success text-white">
+                    <div class="card-body">
+                        <h3 class="mb-1">{{ reports|selectattr('rep_status', 'equalto', 'resolvida')|list|length }}</h3>
+                        <small>Resolvidas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Denúncias -->
+        {% if reports %}
+            <div class="row">
+                {% for report in reports %}
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="card report-card h-100">
+                            {% if report.rep_photo %}
+                                <img src="{{ url_for('static', filename='uploads/' + report.rep_photo) }}" 
+                                     class="card-img-top report-image" 
+                                     alt="Foto da denúncia"
+                                     onerror="this.style.display='none'">
+                            {% else %}
+                                <div class="card-img-top report-image bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image text-muted" style="font-size: 3rem;"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title text-truncate me-2">{{ report.rep_title }}</h5>
+                                    <span class="status-badge status-{{ report.rep_status }}">
+                                        {% if report.rep_status == 'pendente' %}
+                                            <i class="fas fa-clock me-1"></i>Pendente
+                                        {% elif report.rep_status == 'em-analise' %}
+                                            <i class="fas fa-search me-1"></i>Em Análise
+                                        {% elif report.rep_status == 'resolvida' %}
+                                            <i class="fas fa-check me-1"></i>Resolvida
+                                        {% elif report.rep_status == 'rejeitada' %}
+                                            <i class="fas fa-times me-1"></i>Rejeitada
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <p class="card-text text-muted">
+                                    {{ report.rep_desc[:100] }}{% if report.rep_desc|length > 100 %}...{% endif %}
+                                </p>
+                                
+                                <div class="report-meta mb-3">
+                                    <div class="mb-1">
+                                        <i class="fas fa-map-marker-alt me-2"></i>
+                                        <strong>{{ report.rep_city }}</strong>
+                                        {% if report.rep_address %}
+                                            - {{ report.rep_address }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-1">
+                                        <i class="fas fa-calendar me-2"></i>
+                                        Avistado em: {{ report.rep_date.strftime('%d/%m/%Y') }}
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-clock me-2"></i>
+                                        Denunciado em: {{ report.rep_created_at.strftime('%d/%m/%Y às %H:%M') }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer bg-transparent">
+                                <button class="btn btn-outline-primary btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#reportModal{{ report.rep_id }}">
+                                    <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal de Detalhes -->
+                    <div class="modal fade" id="reportModal{{ report.rep_id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ report.rep_title }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    {% if report.rep_photo %}
+                                        <img src="{{ url_for('static', filename='uploads/' + report.rep_photo) }}" 
+                                             class="img-fluid mb-3 rounded" 
+                                             alt="Foto da denúncia">
+                                    {% endif %}
+                                    
+                                    <h6>Descrição Completa:</h6>
+                                    <p class="mb-3">{{ report.rep_desc }}</p>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Localização:</h6>
+                                            <p><strong>{{ report.rep_city }}</strong></p>
+                                            {% if report.rep_address %}
+                                                <p class="text-muted">{{ report.rep_address }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Contato:</h6>
+                                            {% if report.rep_phone %}
+                                                <p><i class="fas fa-phone me-2"></i>{{ report.rep_phone }}</p>
+                                            {% endif %}
+                                            {% if report.rep_email %}
+                                                <p><i class="fas fa-envelope me-2"></i>{{ report.rep_email }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <strong>Data do Avistamento:</strong><br>
+                                                {{ report.rep_date.strftime('%d/%m/%Y') }}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <strong>Denúncia Criada:</strong><br>
+                                                {{ report.rep_created_at.strftime('%d/%m/%Y às %H:%M') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <span class="status-badge status-{{ report.rep_status }} me-auto">
+                                        {% if report.rep_status == 'pendente' %}
+                                            <i class="fas fa-clock me-1"></i>Pendente
+                                        {% elif report.rep_status == 'em-analise' %}
+                                            <i class="fas fa-search me-1"></i>Em Análise
+                                        {% elif report.rep_status == 'resolvida' %}
+                                            <i class="fas fa-check me-1"></i>Resolvida
+                                        {% elif report.rep_status == 'rejeitada' %}
+                                            <i class="fas fa-times me-1"></i>Rejeitada
+                                        {% endif %}
+                                    </span>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Estado Vazio -->
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>Nenhuma denúncia encontrada</h3>
+                <p class="mb-4">Você ainda não fez nenhuma denúncia. Que tal reportar um animal em situação de risco?</p>
+                <a href="{{ url_for('report') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Fazer Primeira Denúncia
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Navegação de Volta -->
+        <div class="text-center mt-5 mb-4">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
