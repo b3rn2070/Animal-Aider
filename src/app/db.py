@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime as dt, timedelta, datetime
 from argon2 import PasswordHasher
+import logging
+from sqlalchemy.exc import SQLAlchemyError
 
 db = SQLAlchemy()
 
@@ -58,17 +60,24 @@ class User(db.Model):
 
 class Report(db.Model):
     __tablename__ = 'tbReport'
+    __table_args__ = {'extend_existing': True}  # Permite redefinir tabela existente
+    
     rep_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    rep_title = db.Column(db.String, nullable=False)
-    rep_desc = db.Column(db.String)
-    rep_city = db.Column(db.String)
-    rep_address = db.Column(db.String)
-    rep_date = db.Column(db.DateTime, default=datetime.utcnow)
-    rep_phone = db.Column(db.String, default=None)
-    rep_email = db.Column(db.String, default=None)
-    rep_resolved = db.Column(db.Boolean, default=False)
-    rep_photo = db.Column(db.String, default=None)
-    rep_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'))
+    rep_title = db.Column(db.String(255), nullable=False, index=True)  # Índice para busca
+    rep_desc = db.Column(db.Text)  # Text para descrições longas
+    rep_city = db.Column(db.String(100), index=True)  # Índice para filtros por cidade
+    rep_address = db.Column(db.String(255))
+    rep_date = db.Column(db.DateTime, nullable=False, index=True)  # Índice para ordenação
+    rep_phone = db.Column(db.String(20))
+    rep_email = db.Column(db.String(100))
+    rep_resolved = db.Column(db.Boolean, default=False, index=True)  # Índice para filtros
+    rep_photo = db.Column(db.String(255))
+    rep_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
+    rep_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
+    rep_updated_at = db.Column(db.DateTime, default=dt.utcnow, onupdate=dt.utcnow)  # Timestamp de atualização
+    
+    def __repr__(self):
+        return f'<Report {self.rep_id}: {self.rep_title}>'
 
 class Ong(db.Model):
     __tablename__ = 'tbOngs'
@@ -88,20 +97,67 @@ class Ong(db.Model):
     ong_rescuesResolved = db.Column(db.Integer, default=0)
     ong_profile_photo = db.Column(db.String, default=None)
 
+    def update_fields(self, **kwargs):
+        """
+        Atualiza apenas os campos fornecidos que são diferentes dos atuais
+        """
+        updated_fields = {}
+        
+        for field, new_value in kwargs.items():
+            if hasattr(self, field) and new_value is not None:
+                current_value = getattr(self, field)
+                
+                # Só atualiza se o valor for diferente
+                if current_value != new_value and str(new_value).strip() != '':
+                    setattr(self, field, new_value)
+                    updated_fields[field] = new_value
+        
+        return updated_fields
+
+    def safe_update(self, data_dict, allowed_fields=None):
+        """
+        Update seguro com lista de campos permitidos
+        """
+        if allowed_fields is None:
+            allowed_fields = [
+                'ong_name', 'ong_phone', 'ong_email', 'ong_cpf', 'ong_cep',
+                'ong_city', 'ong_hood', 'ong_address', 'ong_num', 'ong_desc',
+                'ong_reportsResolved', 'ong_rescuesResolved', 'ong_profile_photo'
+            ]
+        
+        # Filtra apenas campos permitidos e não vazios
+        filtered_data = {k: v for k, v in data_dict.items() 
+                        if k in allowed_fields and v is not None and str(v).strip() != ''}
+        
+        updated_fields = self.update_fields(**filtered_data)
+        
+        return {
+            'success': len(updated_fields) > 0,
+            'updated_fields': updated_fields,
+            'total_changes': len(updated_fields)
+        }
+
 class Rescue(db.Model):
     __tablename__ = 'tbRescues'
+    __table_args__ = {'extend_existing': True}  # Permite redefinir tabela existente
+    
     resc_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    resc_date = db.Column(db.DateTime, default=datetime.utcnow)
-    resc_desc = db.Column(db.String)
-    resc_photo = db.Column(db.String)
-    resc_author = db.Column(db.String)
-    resc_phone = db.Column(db.String, default=None)
-    resc_cep = db.Column(db.String)
-    resc_city = db.Column(db.String)
-    resc_addr = db.Column(db.String)
-    resc_num = db.Column(db.String)
-    resc_resolved = db.Column(db.Boolean, default=False)
-    resc_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'))
+    resc_date = db.Column(db.DateTime, default=dt.utcnow, index=True)  # Índice para ordenação
+    resc_desc = db.Column(db.Text, nullable=False)  # Text para descrições longas
+    resc_photo = db.Column(db.String(255))
+    resc_author = db.Column(db.String(100), nullable=False)
+    resc_phone = db.Column(db.String(20), nullable=False)
+    resc_cep = db.Column(db.String(10))
+    resc_city = db.Column(db.String(100), nullable=False, index=True)  # Índice para filtros
+    resc_addr = db.Column(db.String(255))
+    resc_num = db.Column(db.String(20))
+    resc_resolved = db.Column(db.Boolean, default=False, index=True)  # Índice para filtros
+    resc_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
+    resc_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
+    resc_updated_at = db.Column(db.DateTime, default=dt.utcnow, onupdate=dt.utcnow)  # Timestamp de atualização
+    
+    def __repr__(self):
+        return f'<Rescue {self.resc_id}: {self.resc_author} - {self.resc_city}>'
 
 # Funções de CRUD
 def saveUser(name, email, password, phone, cep, city, addr, num, photo=None):
@@ -150,7 +206,33 @@ def updateUser(user_id, **kwargs):
         db.session.rollback()
         return {'success': False, 'error': str(e)}
 
-def saveOng(name, phone, email, password, cpf, cep, city, hood, address, num, photo=None, desc=None):
+def updateOng(ong_id, **kwargs):
+    try:
+        ong = User.query.get(ong_id)
+        if not ong:
+            return {'success': False, 'error': 'Usuário não encontrado'}
+        
+        result = ong.safe_update(kwargs)
+        
+        if result['success']:
+            db.session.commit()
+            return {
+                'success': True,
+                'updated_fields': result['updated_fields'],
+                'message': f"{result['total_changes']} campo(s) atualizado(s)"
+            }
+        else:
+            return {
+                'success': True,
+                'message': 'Nenhuma alteração necessária',
+                'updated_fields': {}
+            }
+            
+    except Exception as e:
+        db.session.rollback()
+        return {'success': False, 'error': str(e)}
+
+def saveOng(name, phone, email, password, cpf, cep, city, hood, address, num, photo, desc=None):
     if Ong.query.filter_by(ong_email=email).first():
         return False
     ph = PasswordHasher()
@@ -167,7 +249,7 @@ def saveOng(name, phone, email, password, cpf, cep, city, hood, address, num, ph
         ong_address=address,
         ong_num=num,
         ong_desc=desc,
-        ong_profile_photo=photo
+        ong_profile_photo=photo,
     )
     db.session.add(ong)
     db.session.commit()
@@ -201,36 +283,88 @@ def checkOng(email, password):
     return False
 
 def saveReport(title, desc, city, date, phone, photo=None, email=None, addr=None, userId=None):
-    report = Report(
-        rep_title=title,
-        rep_desc=desc,
-        rep_city=city,
-        rep_address=addr,
-        rep_date=datetime.strptime(date, '%Y-%m-%d'),
-        rep_phone=phone,
-        rep_email=email,
-        rep_photo=photo,
-        rep_user_id=userId
-    )
-    db.session.add(report)
-    db.session.commit()
-    return True
+    try:
+        # Validação adicional no nível de dados (photo não é obrigatório aqui)
+        if not all([title, desc, city, date, phone]):
+            logging.error("Campos obrigatórios ausentes")
+            print(f"Campos: title={title}, desc={desc}, city={city}, date={date}, phone={phone}")
+            return False
+        
+        # Conversão de userId se necessário
+        if userId:
+            try:
+                userId = int(userId)
+            except (ValueError, TypeError):
+                userId = None
+        
+        report = Report(
+            rep_title=title[:255],  # Limita tamanho
+            rep_desc=desc[:1000],   # Limita tamanho
+            rep_city=city[:100],    # Limita tamanho
+            rep_address=addr[:255] if addr else None,
+            rep_date=dt.strptime(date, '%Y-%m-%d'),
+            rep_phone=phone[:20],   # Limita tamanho
+            rep_email=email[:100] if email else None,
+            rep_photo=photo,  # Pode ser None
+            rep_user_id=userId if userId else None
+        )
+        
+        db.session.add(report)
+        db.session.commit()
+        
+        logging.info(f"Relatório salvo com sucesso - ID: {report.rep_id}")
+        return True
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logging.error(f"Erro SQLAlchemy: {e}")
+        return False
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao salvar relatório: {e}")
+        return False
 
-def saveRescue(desc, author, phone, cep, city, addr, num, photo=None, userId=None):
-    rescue = Rescue(
-        resc_desc=desc,
-        resc_photo=photo,
-        resc_author=author,
-        resc_phone=phone,
-        resc_cep=cep,
-        resc_city=city,
-        resc_addr=addr,
-        resc_num=num,
-        resc_user_id=userId
-    )
-    db.session.add(rescue)
-    db.session.commit()
-    return True
+def saveRescue(desc, author, phone, cep, city, addr=None, num=None, photo=None, userId=None):
+    try:
+        # Validação adicional no nível de dados
+        if not all([desc, author, phone, city]):
+            logging.error("Campos obrigatórios ausentes no resgate")
+            print(f"Campos: desc={desc}, author={author}, phone={phone}, city={city}")
+            return False
+        
+        # Conversão de userId se necessário
+        if userId:
+            try:
+                userId = int(userId)
+            except (ValueError, TypeError):
+                userId = None
+        
+        rescue = Rescue(
+            resc_desc=desc[:1000],  # Limita tamanho
+            resc_author=author[:100],  # Limita tamanho
+            resc_phone=phone[:20],  # Limita tamanho
+            resc_cep=cep[:10] if cep else None,  # Limita tamanho
+            resc_city=city[:100],  # Limita tamanho
+            resc_addr=addr[:255] if addr else None,  # Limita tamanho
+            resc_num=num[:20] if num else None,  # Limita tamanho
+            resc_photo=photo,  # Pode ser None
+            resc_user_id=userId if userId else None
+        )
+        
+        db.session.add(rescue)
+        db.session.commit()
+        
+        logging.info(f"Resgate salvo com sucesso - ID: {rescue.resc_id}")
+        return True
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logging.error(f"Erro SQLAlchemy no resgate: {e}")
+        return False
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro ao salvar resgate: {e}")
+        return False
 
 def showAllReports():
     return Report.query.all()

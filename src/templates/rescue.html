@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block conteudo %}
+
 <div class="container my-5">
   <div class="p-4 bg-white rounded shadow-sm" style="max-width: 600px; margin: auto;">
     <form action="{{ url_for('rescue')}}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
@@ -77,40 +78,5 @@
   </div>
 </div>
 
-<script>
-  // Validação Bootstrap
-  (() => {
-    'use strict'
-    const forms = document.querySelectorAll('.needs-validation')
-    Array.from(forms).forEach(form => {
-      form.addEventListener('submit', event => {
-        if (!form.checkValidity()) {
-          event.preventDefault()
-          event.stopPropagation()
-        }
-        form.classList.add('was-validated')
-      }, false)
-    })
-  })();
-
-  // Busca automática do endereço via CEP
-  document.getElementById('cep')?.addEventListener('blur', function () {
-    const cep = this.value.replace(/\D/g, '');
-
-    if (cep.length === 8) {
-      fetch(`/get_address/${cep}`)
-        .then(res => res.json())
-        .then(data => {
-          if (!data.erro) {
-            document.getElementById('addr').value = data.logradouro || '';
-            // Se tiver um campo cidade visível, atualize aqui também:
-            // document.getElementById('city').value = data.localidade || '';
-          } else {
-            alert('CEP não encontrado.');
-          }
-        })
-        .catch(() => alert('Erro ao buscar o endereço.'));
-    }
-  });
-</script>
 {% endblock conteudo %}
+

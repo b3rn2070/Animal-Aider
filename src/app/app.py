@@ -1,11 +1,22 @@
-from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
+import os
+import uuid
+import logging
+import secrets
+import requests
+
+from datetime import timedelta
+
+from flask import (
+    Flask, request, render_template, session,
+    redirect, url_for, flash, jsonify
+)
+
 from extensions import db
 from db import *
-from datetime import date as dt, timedelta
-import secrets, requests, uuid, os
+
 
 UPLOAD_FOLDER = 'src/static/uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'jfif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 random_key = secrets.token_hex(16)
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
@@ -30,7 +41,6 @@ cities = [cidade['nome'] for cidade in data]
 
 def checkExtension(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 @app.route("/")
 def index():
@@ -119,52 +129,137 @@ def register():
             flash('Erro ao registrar usuário. Verifique os dados.', 'error')
     return render_template('register.html', cities=cities)
 
-@app.route("/report", methods=['POST', 'GET']) #lembrar de colocar forma de enviar a foto depois
+@app.route("/report", methods=['POST', 'GET'])
 def report():
+    # Cache das datas
     hoje = dt.today()
     min_data = hoje - timedelta(days=2)
     max_data = hoje
-
+    
+    # Formatar datas para o HTML
+    max_data_str = max_data.strftime('%Y-%m-%d')
+    min_data_str = min_data.strftime('%Y-%m-%d')
+    
+    # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        if request.form.get('title') and request.form.get('desc') and request.form.get('date') and request.form.get('city'):
-            title = request.form.get('title')
-            desc = request.form.get('desc')
-            date = request.form.get('date')
-            email = request.form.get('email')
-            city = request.form.get('city')
-            addr = request.form.get('addr')
-            phone = request.form.get('phone')
-            photo = request.files('photo')
-            userId = request.form.get('userId')
-            
-            if not userId:
-                userId = None
-            if not email:
-                email = None
-            if not addr:
-                addr = None
-
-
-            if photo and checkExtension(photo.filename):
-
-                extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
-                new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
-
-                # Salva o arquivo com o novo nome
-                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
-
-                if saveReport(title, desc, city, date, phone, new_filename, email, addr, userId):
-                    flash('Relatório enviado com sucesso!', 'success')
-                    return redirect(url_for('index'))
-                else:
-                    flash('Erro ao enviar relatório. Tente novamente.', 'error')
+    
+    if request.method == 'GET':
+        return render_template('report.html', 
+                             min_data=min_data_str, 
+                             max_data=max_data_str, 
+                             cities=cities)
+    
+    # Processar POST
+    try:
+        # Validação de campos obrigatórios básicos
+        required_fields = ['title', 'desc', 'date', 'city']
+        missing_fields = [field for field in required_fields 
+                         if not request.form.get(field, '').strip()]
+        
+        # Verificar se usuário está logado para validar telefone
+        user_logged = session.get('logged')
+        if not user_logged:
+            # Para usuários não logados, telefone é obrigatório
+            if not request.form.get('phone', '').strip():
+                missing_fields.append('phone')
+        
+        # Verificar se foto é obrigatória (conforme formulário)
+        photo = request.files['photo']
+        if not photo or not photo.filename:
+            flash('A foto do avistamento é obrigatória.', 'error')
+            return render_template('report.html', 
+                                 min_data=min_data_str, 
+                                 max_data=max_data_str, 
+                                 cities=cities)
+        
+        if missing_fields:
+            flash('Preencha todos os campos obrigatórios.', 'error')
+            return render_template('report.html', 
+                                 min_data=min_data_str, 
+                                 max_data=max_data_str, 
+                                 cities=cities)
+        
+        # Extração e limpeza dos dados
+        data = {
+            'title': request.form.get('title').strip(),
+            'desc': request.form.get('desc').strip(),
+            'date': request.form.get('date').strip(),
+            'city': request.form.get('city').strip(),
+            'addr': request.form.get('addr', '').strip() or None,
+        }
+        
+        # Dados específicos por tipo de usuário
+        if user_logged:
+            # Usuário logado - dados vêm da sessão
+            data['email'] = session.get('user_email')
+            data['phone'] = session.get('user_phone') 
+            data['userId'] = session.get('user_id')
         else:
-            flash('Preencha todos os campos do relatório.', 'error')
-
-    return render_template('report.html', min_data=min_data.isoformat(), max_data=max_data.isoformat(), cities=cities)
+            # Usuário anônimo - dados vêm do formulário
+            data['email'] = request.form.get('email', '').strip() or None
+            data['phone'] = request.form.get('phone', '').strip()
+            data['userId'] = None
+        
+        # Processamento de foto (obrigatória)
+        photo_filename = None
+        if photo and checkExtension(photo.filename):
+            try:
+                extension = photo.filename.rsplit('.', 1)[1].lower()
+                photo_filename = str(uuid.uuid4()) + '.' + extension
+                
+                # Cria diretório se não existir
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+            except Exception as e:
+                logging.error(f"Erro no upload: {e}")
+                flash('Erro ao fazer upload da imagem.', 'error')
+                return render_template('report.html', 
+                                     min_data=min_data_str, 
+                                     max_data=max_data_str, 
+                                     cities=cities)
+        else:
+            flash('Formato de imagem inválido. Use apenas PNG, JPG, JPEG ou GIF.', 'error')
+            return render_template('report.html', 
+                                 min_data=min_data_str, 
+                                 max_data=max_data_str, 
+                                 cities=cities)
+        
+        # Salvar no banco
+        if saveReport(
+            title=data['title'],
+            desc=data['desc'],
+            city=data['city'],
+            date=data['date'],
+            phone=data['phone'],
+            photo=photo_filename,
+            email=data['email'],
+            addr=data['addr'],
+            userId=data['userId']
+        ):
+            if user_logged:
+                flash('Relatório enviado com sucesso!', 'success')
+            else:
+                flash('Denúncia anônima enviada com sucesso!', 'success')
+            return redirect(url_for('index'))
+        else:
+            # Remove arquivo se salvamento falhou
+            if photo_filename:
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+                except:
+                    pass
+            flash('Erro ao salvar relatório. Tente novamente.', 'error')
+    
+    except Exception as e:
+        logging.error(f"Erro na rota report: {e}")
+        flash('Erro interno. Tente novamente.', 'error')
+    
+    return render_template('report.html', 
+                         min_data=min_data_str, 
+                         max_data=max_data_str, 
+                         cities=cities)
 
 #lembrar de tirar isso depois
 @app.route('/ver_dados')
@@ -355,67 +450,200 @@ def ong_profile():
         flash('Você precisa estar logado como ONG para acessar esta página.', 'error')
         return redirect(url_for('ong_login'))
 
-    ong = getOng(session.get('ong_email'))
+    # Busca a ONG pelo SQLAlchemy (mais eficiente)
+    ong = Ong.query.filter_by(ong_email=session.get('ong_email')).first()
+    if not ong:
+        flash('ONG não encontrada.', 'error')
+        return redirect(url_for('ong_login'))
+    
+    ong_id = session.get('ong_id')
 
     if request.method == 'POST':
-        if request.form.get('name') or request.form.get('city') or request.form.get('email') or request.form.get('desc'):
-            name = request.form.get('name')
-            phone = request.form.get('phone')
-            email = request.form.get('email')
-            cpf = request.form.get('cpf')
-            cep = request.form.get('cep')
-            city = request.form.get('city')
-            hood = request.form.get('hood')
-            addr = request.form.get('addr')
-            num = request.form.get('num')
-            desc = request.form.get('desc')
-            photo = request.form.get('photo')
-
-            if ong.ong_email != email and getOng(email):
-                flash('Algum dado editado coincide com outro existente.', 'error')
+        try:
+            # Coleta os dados do formulário (mapeando os nomes corretos)
+            form_data = {
+                'ong_name': request.form.get('name'),
+                'ong_phone': request.form.get('phone'),
+                'ong_email': request.form.get('email'),
+                'ong_cpf': request.form.get('cpf'),
+                'ong_cep': request.form.get('cep'),
+                'ong_city': request.form.get('city'),
+                'ong_hood': request.form.get('hood'),
+                'ong_address': request.form.get('addr'),  # 'addr' no form -> 'ong_address' no banco
+                'ong_num': request.form.get('num'),
+                'ong_desc': request.form.get('desc')
+            }
+            
+            # Remove valores vazios
+            form_data = {k: v for k, v in form_data.items() if v and v.strip()}
+            
+            # Verifica se há dados para atualizar
+            if not form_data and 'photo' not in request.files:
+                flash('Nenhum dado foi fornecido para atualização.', 'warning')
                 return redirect(url_for('ong_profile'))
-
-            if saveOng(session.get('ong_id'), name, phone, email, None, cpf, cep, city, hood, addr, num, photo, desc):
-                flash('Dados atualizados com sucesso!', 'success')
-                session['ong_email'] = email if email else ong[2]
-                session['ong_name'] = name if name else ong[1]
-                session['ong_city'] = city if city else ong[5]
-
-                return redirect(url_for('ong_profile'))
+            
+            # Validação de email único (só se email foi alterado)
+            if 'ong_email' in form_data and form_data['ong_email'] != ong.ong_email:
+                existing_ong = Ong.query.filter_by(ong_email=form_data['ong_email']).first()
+                if existing_ong:
+                    flash('Este email já está sendo usado por outra ONG.', 'error')
+                    return redirect(url_for('ong_profile'))
+            
+            # Processamento da foto
+            new_filename = None
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename and checkExtension(photo.filename):
+                    extension = photo.filename.rsplit('.', 1)[1].lower()
+                    new_filename = str(uuid.uuid4()) + '.' + extension
+                    
+                    # Salva a nova foto
+                    photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+                    form_data['ong_profile_photo'] = new_filename
+                    
+                    # Remove a foto antiga se existir
+                    if ong.ong_profile_photo:
+                        old_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], ong.ong_profile_photo)
+                        if os.path.exists(old_photo_path):
+                            try:
+                                os.remove(old_photo_path)
+                            except:
+                                pass  # Se não conseguir deletar, continua
+                    
+                elif photo and photo.filename:  # Se tem arquivo mas extensão inválida
+                    flash('Extensão de arquivo não suportada.', 'error')
+                    return redirect(url_for('ong_profile'))
+            
+            # Atualiza a ONG usando o método safe_update
+            result = ong.safe_update(form_data)
+            
+            if result['success']:
+                # Salva no banco
+                db.session.commit()
+                
+                if result.get('updated_fields'):
+                    flash(f'Dados atualizados com sucesso! {result["total_changes"]} campo(s) alterado(s).', 'success')
+                    
+                    # Atualiza a sessão se necessário
+                    updated_fields = result['updated_fields']
+                    if 'ong_email' in updated_fields:
+                        session['ong_email'] = updated_fields['ong_email']
+                    if 'ong_name' in updated_fields:
+                        session['ong_name'] = updated_fields['ong_name']
+                    if 'ong_city' in updated_fields:
+                        session['ong_city'] = updated_fields['ong_city']
+                else:
+                    flash('Nenhuma alteração foi necessária.', 'info')
             else:
-                flash('Erro ao atualizar dados. Tente novamente.', 'error')
+                flash('Nenhuma alteração foi detectada.', 'info')
+                
+        except Exception as e:
+            db.session.rollback()  # Reverte mudanças em caso de erro
+            flash(f'Erro interno: {str(e)}', 'error')
+            
+        return redirect(url_for('ong_profile'))
 
     return render_template('ong_profile.html', cities=cities, ong=ong)
 
 @app.route('/rescue', methods=['GET', 'POST'])
 def rescue():
+    # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        if  request.form.get('desc') and request.form.get('city'): 
-            desc = request.form.get('desc')
-            city = request.form.get('city')
-            addr = request.form.get('address')
-            num = request.form.get('num')
-            phone = request.form.get('phone')
-            author = request.form.get('author')
-            userId = request.form.get('userId')
-            cep = request.form.get('cep')
-            photo = request.form.get('photo')
-            
-            if not photo:
-                photo = None
-
-            if saveRescue(desc, author, phone, cep, city, addr, num, photo, userId):
-                flash('Resgate registrado com sucesso!', 'success')
-                return redirect(url_for('index'))
-            else:
-                flash('Erro ao registrar resgate. Tente novamente.', 'error')
+    
+    if request.method == 'GET':
+        return render_template('rescue.html', cities=cities)
+    
+    # Processar POST
+    try:
+        # Validação de campos obrigatórios básicos
+        required_fields = ['desc', 'city']
+        missing_fields = [field for field in required_fields 
+                         if not request.form.get(field, '').strip()]
+        
+        # Verificar se usuário está logado para validar campos adicionais
+        user_logged = session.get('logged')
+        if not user_logged:
+            # Para usuários não logados, campos adicionais são obrigatórios
+            additional_required = ['author', 'phone']
+            for field in additional_required:
+                if not request.form.get(field, '').strip():
+                    missing_fields.append(field)
+        
+        if missing_fields:
+            flash('Preencha todos os campos obrigatórios.', 'error')
+            return render_template('rescue.html', cities=cities)
+        
+        # Extração e limpeza dos dados
+        data = {
+            'desc': request.form.get('desc').strip(),
+            'city': request.form.get('city').strip(),
+            'addr': request.form.get('address', '').strip() or None,
+            'num': request.form.get('num', '').strip() or None,
+            'cep': request.form.get('cep', '').strip() or None,
+        }
+        
+        # Dados específicos por tipo de usuário
+        if user_logged:
+            # Usuário logado - dados vêm da sessão (assumindo que existam na sessão)
+            data['author'] = session.get('user_name') or session.get('user_email', 'Usuário Logado')
+            data['phone'] = session.get('user_phone')
+            data['userId'] = session.get('user_id')
         else:
-            flash('Preencha todos os campos do resgate.', 'error')
-
-    return render_template('rescue.html')
+            # Usuário anônimo - dados vêm do formulário
+            data['author'] = request.form.get('author').strip()
+            data['phone'] = request.form.get('phone').strip()
+            data['userId'] = None
+        
+        # Processamento de foto (opcional)
+        photo_filename = None
+        photo = request.files['photo']
+        
+        if photo and photo.filename and checkExtension(photo.filename):
+            try:
+                extension = photo.filename.rsplit('.', 1)[1].lower()
+                photo_filename = str(uuid.uuid4()) + '.' + extension
+                
+                # Cria diretório se não existir
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+            except Exception as e:
+                logging.error(f"Erro no upload de foto do resgate: {e}")
+                flash('Erro ao fazer upload da imagem.', 'error')
+                return render_template('rescue.html', cities=cities)
+        
+        # Salvar no banco
+        if saveRescue(
+            desc=data['desc'],
+            author=data['author'],
+            phone=data['phone'],
+            cep=data['cep'],
+            city=data['city'],
+            addr=data['addr'],
+            num=data['num'],
+            photo=photo_filename,
+            userId=data['userId']
+        ):
+            if user_logged:
+                flash('Resgate registrado com sucesso!', 'success')
+            else:
+                flash('Resgate anônimo registrado com sucesso!', 'success')
+            return redirect(url_for('index'))
+        else:
+            # Remove arquivo se salvamento falhou
+            if photo_filename:
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+                except:
+                    pass
+            flash('Erro ao registrar resgate. Tente novamente.', 'error')
+    
+    except Exception as e:
+        logging.error(f"Erro na rota rescue: {e}")
+        flash('Erro interno. Tente novamente.', 'error')
+    
+    return render_template('rescue.html', cities=cities)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% block conteudo %}
+
 <div class="container my-5">
   <h1 class="mb-4 text-center text-primary">Relatório de Denúncia</h1>
 
-  <form action="{{ url_for('report') }}" method="post" class="needs-validation" novalidate>
+  <form action="{{ url_for('report') }}" method="post" enctype="multipart/form-data" class="needs-validation form-control" novalidate>
     <div class="row g-3">
 
       <div class="col-12">
@@ -40,6 +41,11 @@
         <input type="text" id="addr" name="addr" class="form-control" placeholder="Rua, número, bairro...">
       </div>
 
+      <div class="col-12">
+        <label for="photo" class="form-label fw-semibold">Foto do avistamento:</label>
+        <input type="file" id="photo" name="photo" class="form-control" required>
+      </div>
+
       {% if not session.get('logged') %}
       <div class="col-md-6">
         <label for="phone" class="form-label fw-semibold">Celular:</label>
@@ -69,25 +75,9 @@
       <div class="col-12 text-center mt-4">
         <button type="submit" class="btn btn-success btn-lg px-5">Enviar Denúncia</button>
       </div>
+
     </div>
   </form>
 </div>
-
-<script>
-// Exemplo simples para ativar validação do Bootstrap
-(() => {
-  'use strict'
-  const forms = document.querySelectorAll('.needs-validation')
-  Array.from(forms).forEach(form => {
-    form.addEventListener('submit', event => {
-      if (!form.checkValidity()) {
-        event.preventDefault()
-        event.stopPropagation()
-      }
-      form.classList.add('was-validated')
-    }, false)
-  })
-})()
-</script>
 
 {% endblock conteudo %}
