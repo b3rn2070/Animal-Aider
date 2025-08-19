@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<body class="bg-light">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-heart me-3"></i>
+                        Meus Resgates
+                    </h1>
+                    <p class="mb-0 opacity-75">Acompanhe o progresso dos seus pedidos de resgate de animais</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{{ url_for('rescue') }}" class="btn-new-rescue">
+                        <i class="fas fa-plus me-2"></i>Novo Resgate
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Estatísticas Rápidas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center border-0 bg-success text-white">
+                    <div class="card-body">
+                        <h3 class="mb-1">{{ rescues|length }}</h3>
+                        <small>Total de Resgates</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-0 bg-warning text-dark">
+                    <div class="card-body">
+                        <h3 class="mb-1">{{ rescues|selectattr('resc_status', 'equalto', 'pendente')|list|length }}</h3>
+                        <small>Pendentes</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-0 bg-info text-white">
+                    <div class="card-body">
+                        <h3 class="mb-1">{{ rescues|selectattr('resc_status', 'equalto', 'em-andamento')|list|length }}</h3>
+                        <small>Em Andamento</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-0 bg-primary text-white">
+                    <div class="card-body">
+                        <h3 class="mb-1">{{ rescues|selectattr('resc_status', 'equalto', 'concluido')|list|length }}</h3>
+                        <small>Concluídos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Resgates -->
+        {% if rescues %}
+            <div class="row">
+                {% for rescue in rescues %}
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="card rescue-card h-100 position-relative">
+                            {% if rescue.resc_photo %}
+                                <img src="{{ url_for('static', filename='uploads/' + rescue.resc_photo) }}" 
+                                     class="card-img-top rescue-image" 
+                                     alt="Foto do resgate"
+                                     onerror="this.style.display='none'">
+                            {% else %}
+                                <div class="card-img-top rescue-image bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-paw text-muted" style="font-size: 3rem;"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-1">{{ rescue.resc_author }}</h5>
+                                    <span class="status-badge status-{{ rescue.resc_status }}">
+                                        {% if rescue.resc_status == 'pendente' %}
+                                            <i class="fas fa-clock me-1"></i>Pendente
+                                        {% elif rescue.resc_status == 'em-andamento' %}
+                                            <i class="fas fa-ambulance me-1"></i>Em Andamento
+                                        {% elif rescue.resc_status == 'concluido' %}
+                                            <i class="fas fa-check-circle me-1"></i>Concluído
+                                        {% elif rescue.resc_status == 'cancelado' %}
+                                            <i class="fas fa-times-circle me-1"></i>Cancelado
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <p class="card-text text-muted mb-2">
+                                    {{ rescue.resc_desc[:120] }}{% if rescue.resc_desc|length > 120 %}...{% endif %}
+                                </p>
+                                
+                                <div class="rescue-meta mb-3">
+                                    <div class="mb-1">
+                                        <i class="fas fa-map-marker-alt me-2"></i>
+                                        <strong>{{ rescue.resc_city }}</strong>
+                                        {% if rescue.resc_addr %}
+                                            {% if rescue.resc_num %}
+                                                - {{ rescue.resc_addr }}, {{ rescue.resc_num }}
+                                            {% else %}
+                                                - {{ rescue.resc_addr }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    {% if rescue.resc_cep %}
+                                        <div class="mb-1">
+                                            <i class="fas fa-mail-bulk me-2"></i>
+                                            CEP: {{ rescue.resc_cep }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="mb-1">
+                                        <i class="fas fa-phone me-2"></i>
+                                        {{ rescue.resc_phone }}
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-calendar-plus me-2"></i>
+                                        {{ rescue.resc_created_at.strftime('%d/%m/%Y às %H:%M') }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer bg-transparent">
+                                <button class="btn btn-outline-success btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#rescueModal{{ rescue.resc_id }}">
+                                    <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                </button>
+                                <small class="text-muted float-end">
+                                    ID: #{{ rescue.resc_id }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal de Detalhes -->
+                    <div class="modal fade" id="rescueModal{{ rescue.resc_id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header bg-success text-white">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-heart me-2"></i>
+                                        Resgate - {{ rescue.resc_author }}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    {% if rescue.resc_photo %}
+                                        <img src="{{ url_for('static', filename='uploads/' + rescue.resc_photo) }}" 
+                                             class="img-fluid mb-3 rounded" 
+                                             alt="Foto do resgate">
+                                    {% endif %}
+                                    
+                                    <h6><i class="fas fa-align-left me-2"></i>Descrição da Situação:</h6>
+                                    <p class="mb-3 p-3 bg-light rounded">{{ rescue.resc_desc }}</p>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <div class="contact-info">
+                                                <h6><i class="fas fa-user me-2"></i>Solicitante:</h6>
+                                                <p class="mb-2"><strong>{{ rescue.resc_author }}</strong></p>
+                                                <p class="mb-0">
+                                                    <i class="fas fa-phone me-2"></i>{{ rescue.resc_phone }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="contact-info">
+                                                <h6><i class="fas fa-map-marker-alt me-2"></i>Localização:</h6>
+                                                <p class="mb-1"><strong>{{ rescue.resc_city }}</strong></p>
+                                                {% if rescue.resc_addr %}
+                                                    <p class="mb-1">
+                                                        {{ rescue.resc_addr }}
+                                                        {% if rescue.resc_num %}, {{ rescue.resc_num }}{% endif %}
+                                                    </p>
+                                                {% endif %}
+                                                {% if rescue.resc_cep %}
+                                                    <p class="mb-0 text-muted">CEP: {{ rescue.resc_cep }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <strong><i class="fas fa-calendar-plus me-1"></i>Solicitação Criada:</strong><br>
+                                                {{ rescue.resc_created_at.strftime('%d/%m/%Y às %H:%M') }}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <strong><i class="fas fa-clock me-1"></i>Última Atualização:</strong><br>
+                                                {{ rescue.resc_date.strftime('%d/%m/%Y às %H:%M') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <span class="status-badge status-{{ rescue.resc_status }} me-auto">
+                                        {% if rescue.resc_status == 'pendente' %}
+                                            <i class="fas fa-clock me-1"></i>Aguardando Atendimento
+                                        {% elif rescue.resc_status == 'em-andamento' %}
+                                            <i class="fas fa-ambulance me-1"></i>Equipe a Caminho
+                                        {% elif rescue.resc_status == 'concluido' %}
+                                            <i class="fas fa-check-circle me-1"></i>Animal Resgatado
+                                        {% elif rescue.resc_status == 'cancelado' %}
+                                            <i class="fas fa-times-circle me-1"></i>Cancelado
+                                        {% endif %}
+                                    </span>
+                                    
+                                    {% if rescue.resc_phone %}
+                                        <a href="tel:{{ rescue.resc_phone }}" class="btn btn-success btn-sm me-2">
+                                            <i class="fas fa-phone me-1"></i>Ligar
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Estado Vazio -->
+            <div class="empty-state">
+                <i class="fas fa-heart-broken"></i>
+                <h3>Nenhum resgate solicitado</h3>
+                <p class="mb-4">Você ainda não solicitou nenhum resgate. Ajude um animal em situação de risco!</p>
+                <a href="{{ url_for('rescue') }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>Solicitar Primeiro Resgate
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Informações Importantes -->
+        {% if rescues %}
+            <div class="row mt-5">
+                <div class="col-md-12">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Informações Importantes sobre Resgates
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h6><i class="fas fa-clock me-2 text-warning"></i>Pendente</h6>
+                                    <p class="small text-muted">Sua solicitação foi recebida e está aguardando análise da nossa equipe.</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6><i class="fas fa-ambulance me-2 text-info"></i>Em Andamento</h6>
+                                    <p class="small text-muted">Uma equipe foi designada e está a caminho do local para o resgate.</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6><i class="fas fa-check-circle me-2 text-success"></i>Concluído</h6>
+                                    <p class="small text-muted">O animal foi resgatado com sucesso e está recebendo os cuidados necessários.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Navegação de Volta -->
+        <div class="text-center mt-5 mb-4">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao Início
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+{% endblock conteudo %}

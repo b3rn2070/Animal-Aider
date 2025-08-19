@@ -17,5 +17,24 @@
         </button>
     </form>
 </div>
+<div class="container mt-5">
+    <h3 class="mb-4 text-center">ONGs Próximas:</h3>
+
+    {% if ongs %}
+    <div class="scrolling-wrapper d-flex flex-nowrap overflow-auto px-3 py-2" style="gap: 20px;">
+        {% for ong in ongs %}
+        <div class="card text-center p-2 flex-shrink-0" style="width: 150px; border: 1px solid #ccc; border-radius: 12px;">
+            <img src="{{ url_for('static', filename='uploads/' + (ong.ong_profile_photo or 'default_logo.png')) }}"
+                 alt="{{ ong.ong_name }}" class="img-fluid" style="height: 100px; object-fit: contain; margin-bottom: 10px;">
+            <p class="fw-bold mb-0" style="font-size: 0.9rem;">{{ ong.ong_name }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center" role="alert" style="max-width: 500px; margin: 0 auto;">
+        😕 Nenhuma ONG encontrada na sua região no momento.
+    </div>
+    {% endif %}
+</div>
 
 {% endblock conteudo %}

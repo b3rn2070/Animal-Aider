@@ -46,8 +46,14 @@ def checkExtension(filename):
 def index():
     if session.get('ong_logged'):
         return render_template("ong_index.html")
+
+    if session.get('logged') and request.method == 'GET':
+        city = session.get('user_city')
+        ongs = Ong.query.filter_by(ong_city=city).all()
     else:
-        return render_template("index.html")
+        ongs = Ong.query.all()
+
+    return render_template("index.html", ongs=ongs)
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
@@ -351,6 +357,8 @@ def user():
                         session['user_email'] = updated_fields['user_email']
                     if 'user_name' in updated_fields:
                         session['user_name'] = updated_fields['user_name']
+                    if 'user_city' in updated_fields:
+                        session['user_city'] = updated_fields['user_city']
                 else:
                     flash('Nenhuma alteração foi necessária.', 'info')
             else:
