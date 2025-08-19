@@ -7,3 +7,6 @@ db.txt
 *.png
 *.jpeg
 *.jfif
+static/uploads/*
+!static/uploads/.gitkeep
+!static/uploads/default_profile.jpg

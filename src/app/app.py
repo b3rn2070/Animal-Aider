@@ -3,14 +3,12 @@ import uuid
 import logging
 import secrets
 import requests
-
 from datetime import timedelta
-
+from sqlalchemy import and_
 from flask import (
     Flask, request, render_template, session,
     redirect, url_for, flash, jsonify
 )
-
 from extensions import db
 from db import *
 
@@ -44,8 +42,23 @@ def checkExtension(filename):
 
 @app.route("/")
 def index():
-    if session.get('ong_logged'):
-        return render_template("ong_index.html")
+    if session.get('ong_logged') and request.method == 'GET':
+        city = session.get('ong_city')
+
+        reports = Report.query.filter(
+            and_(
+                Report.rep_city == city,
+                Report.rep_status == 'pendente')
+            ).all()
+        
+        rescues = Rescue.query.filter(
+            and_(
+                Rescue.resc_city == city,
+                Rescue.resc_status == 'pendente'
+            )
+        ).all()  # ← Adicione .all() aqui
+
+        return render_template("ong_index.html", reports=reports, rescues=rescues)
 
     if session.get('logged') and request.method == 'GET':
         city = session.get('user_city')
@@ -77,6 +90,7 @@ def login():
                 session['user_cep'] = user.user_cep
                 session['user_city'] = user.user_city
                 session['user_addr'] = user.user_address
+                session['user_num'] = user.user_num
 
                 flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
@@ -113,9 +127,8 @@ def register():
                 return redirect(url_for('register'))
 
             if not photo:
-                photo = None
-            
-            if photo and checkExtension(photo.filename):
+                new_filename = 'default_profile.jpg'
+            elif photo and checkExtension(photo.filename):
 
                 extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
                 new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
@@ -397,7 +410,9 @@ def ong_register():
             flash('Ong já existente', 'info')
             return redirect(url_for('index'))
         
-        if photo and checkExtension(photo.filename):
+        if not photo:
+            new_filename = 'default_profile.jpg'
+        elif photo and checkExtension(photo.filename):
             extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
             new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
 
@@ -442,6 +457,7 @@ def ong_login():
                     session['ong_logged'] = 1
                     session['ong_id'] = ong.ong_id
                     session['ong_email'] = ong.ong_email
+                    session['ong_city'] = ong.ong_city
 
                     flash('Login bem-sucedido!', 'success')
                 return redirect(url_for('index'))
