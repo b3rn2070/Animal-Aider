@@ -1,64 +1,83 @@
 {% extends 'base.html' %}
 {% block conteudo %}
-<h1>Relatório de Denúncia</h1>
-<form action="{{ url_for('report') }}" method="post" class="form-control" enctype="multipart/form-data">
-    <div>
-        <label for="title">Título:</label>
-        <input type="text" class="form-control" name="title" required />
-    </div>
-    <div>
-        <label for="desc">Descrição:</label>
-        <textarea class="form-control" name="desc" required></textarea>
-    </div>
-    
-    <div>
-        <label for="date">Data do Avistamento:</label>
-        <input type="date" class="form-control" name="date"  min="{{ min_data }}" max="{{ max_data }}" required />
-    </div>
 
-    <div>
-        <label for="city">Cidade: </label>
-            <select name="city" id="cidade" required>
-                {% for city in cities %}
-                    <option value="{{ city }}">{{ city }}</option>
-                {% endfor %}
-            </select>
-    </div>
+<div class="container my-5">
+  <h1 class="mb-4 text-center text-primary">Relatório de Denúncia</h1>
 
-    <div>
-        <label for="addr">Endereço (opcional):</label>
-        <input type="text" name="addr">
-    </div>
-    <div>
-        <label for="photo">Foto do avistamento:</label>
-        <input type="file" name="photo" required>
-    </div>
+  <form action="{{ url_for('report') }}" method="post" enctype="multipart/form-data" class="needs-validation form-control" novalidate>
+    <div class="row g-3">
 
-    {% if not session.get('logged') %}
-        <div>
-            <label for="location">Celular:</label>
-            <input type="tel" class="form-control" name="phone" required />
+      <div class="col-12">
+        <label for="title" class="form-label fw-semibold">Título:</label>
+        <input type="text" id="title" name="title" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira um título.</div>
+      </div>
+
+      <div class="col-12">
+        <label for="desc" class="form-label fw-semibold">Descrição:</label>
+        <textarea id="desc" name="desc" rows="4" class="form-control" required></textarea>
+        <div class="invalid-feedback">Por favor, descreva a denúncia.</div>
+      </div>
+
+      <div class="col-md-6">
+        <label for="date" class="form-label fw-semibold">Data do Avistamento:</label>
+        <input type="date" id="date" name="date" class="form-control" min="{{ min_data }}" max="{{ max_data }}" required>
+        <div class="invalid-feedback">Informe uma data válida.</div>
+      </div>
+
+      <div class="col-md-6">
+        <label for="city" class="form-label fw-semibold">Cidade:</label>
+        <select id="city" name="city" class="form-select" required>
+          <option value="" selected disabled>Selecione uma cidade</option>
+          {% for city in cities %}
+          <option value="{{ city }}">{{ city }}</option>
+          {% endfor %}
+        </select>
+        <div class="invalid-feedback">Selecione uma cidade.</div>
+      </div>
+
+      <div class="col-12">
+        <label for="addr" class="form-label fw-semibold">Endereço (opcional):</label>
+        <input type="text" id="addr" name="addr" class="form-control" placeholder="Rua, número, bairro...">
+      </div>
+
+      <div class="col-12">
+        <label for="photo" class="form-label fw-semibold">Foto do avistamento:</label>
+        <input type="file" id="photo" name="photo" class="form-control" required>
+      </div>
+
+      {% if not session.get('logged') %}
+      <div class="col-md-6">
+        <label for="phone" class="form-label fw-semibold">Celular:</label>
+        <input type="tel" id="phone" name="phone" class="form-control" required placeholder="(XX) XXXXX-XXXX">
+        <div class="invalid-feedback">Informe um telefone válido.</div>
+      </div>
+
+      <div class="col-md-6">
+        <label for="email" class="form-label fw-semibold">Email (opcional):</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="exemplo@email.com">
+      </div>
+
+      <div class="col-12 mt-3">
+        <div class="alert alert-warning text-center" role="alert">
+          <strong>VOCÊ NÃO ESTÁ LOGADO, portanto a denúncia não será possível vê-la novamente.</strong><br>
+          Se quiser salvar, faça login.
         </div>
-        
-        <div>
-            <label for="email">Email (opcional):</label>
-            <input type="email" class="form-control" name="email" />
-        </div>
+      </div>
+      {% endif %}
 
-        <h1>VOCÊ NÃO ESTÁ LOGADO, portanto a denúncia e não será possível vê-la denovo.</h1>
-        <p>Se quiser salvar, faça login.</p>
-    {% endif %}
-
-    <!-- <div>
-        <label for="location">Anexar Imagem (opcional):</label>
-        <input type="file" class="form-control" name="image" accept="image/*" />
-    </div> -->
-
-    {% if session.get('logged') == 1 %}
+      {% if session.get('logged') == 1 %}
         <input type="hidden" name="email" value="{{ session.get('user_email') }}">
         <input type="hidden" name="phone" value="{{ session.get('user_phone') }}">
         <input type="hidden" name="userId" value="{{ session.get('user_id') }}">
-    {% endif %}
-    <button class="btn btn-success">Enviar Denúncia</button>
-</form>
+      {% endif %}
+
+      <div class="col-12 text-center mt-4">
+        <button type="submit" class="btn btn-success btn-lg px-5">Enviar Denúncia</button>
+      </div>
+
+    </div>
+  </form>
+</div>
+
 {% endblock conteudo %}
