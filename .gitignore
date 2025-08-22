@@ -7,4 +7,4 @@ db.txt
 *.png
 *.jpeg
 *.jfif
-
+!static/uploads/default_proflie.jpg

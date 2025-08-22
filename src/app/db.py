@@ -73,6 +73,7 @@ class Report(db.Model):
     rep_status = db.Column(db.String(20), default='pendente', nullable=False, index=True)
     rep_photo = db.Column(db.String(255))
     rep_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
+    resc_ong_id = db.Column(db.Integer, db.ForeignKey('tbOngs.ong_id'), index=True, default='NULL')
     rep_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
     
     def __repr__(self):
@@ -152,6 +153,7 @@ class Rescue(db.Model):
     resc_num = db.Column(db.String(20))
     resc_status = db.Column(db.String(20), default='pendente', nullable=False, index=True)
     resc_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
+    resc_ong_id = db.Column(db.Integer, db.ForeignKey('tbOngs.ong_id'), index=True, default='NULL')
     resc_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
     
     def __repr__(self):

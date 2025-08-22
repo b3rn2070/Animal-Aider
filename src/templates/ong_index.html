@@ -1,4 +1,390 @@
 {% extends 'base_ong.html' %}
 {% block ong_conteudo %}
 
+<div class="container-fluid py-4">
+    <!-- Alert para mensagens -->
+    <div id="alert-container"></div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-primary mb-3">
+                <i class="fas fa-clipboard-list me-2"></i>
+                Gerenciamento de Solicitações
+            </h2>
+            <p class="text-muted">Visualize e gerencie denúncias e resgates pendentes na sua cidade.</p>
+        </div>
+    </div>
+
+    <!-- Denúncias Seção -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Denúncias Pendentes
+                        <span class="badge bg-light text-danger ms-2">{{ reports|length }}</span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if reports %}
+                        <div class="row">
+                            {% for report in reports %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100 border-left-danger">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h6 class="card-title text-primary font-weight-bold">
+                                                {{ report.rep_title }}
+                                            </h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ report.rep_date.strftime('%d/%m/%Y') }}
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <p class="card-text text-muted small">
+                                                {{ report.rep_desc[:100] }}{% if report.rep_desc|length > 100 %}...{% endif %}
+                                            </p>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="row text-sm">
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                                    <strong>Endereço:</strong>
+                                                    <span class="text-muted">{{ report.rep_address or 'Não informado' }}</span>
+                                                </div>
+                                                {% if report.rep_phone %}
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-phone text-success me-2"></i>
+                                                    <strong>Telefone:</strong>
+                                                    <span class="text-muted">{{ report.rep_phone }}</span>
+                                                </div>
+                                                {% endif %}
+                                                {% if report.rep_email %}
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-envelope text-info me-2"></i>
+                                                    <strong>Email:</strong>
+                                                    <span class="text-muted">{{ report.rep_email }}</span>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        {% if report.rep_photo %}
+                                        <div class="mb-3 text-center">
+                                            <img src="{{ report.rep_photo }}" 
+                                                 class="img-thumbnail" 
+                                                 style="max-height: 120px; cursor: pointer;"
+                                                 onclick="showImageModal('{{ report.rep_photo }}', 'Foto da Denúncia')"
+                                                 alt="Foto da denúncia">
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="card-footer bg-light">
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <button class="btn btn-danger btn-sm me-md-2" 
+                                                    onclick="handleAction('reject', 'report', {{ report.rep_id }})">
+                                                <i class="fas fa-times me-1"></i>
+                                                Rejeitar
+                                            </button>
+                                            <button class="btn btn-success btn-sm" 
+                                                    onclick="handleAction('accept', 'report', {{ report.rep_id }})">
+                                                <i class="fas fa-check me-1"></i>
+                                                Aceitar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhuma denúncia pendente</h5>
+                            <p class="text-muted">Não há denúncias aguardando aprovação no momento.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resgates Seção -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-hand-holding-heart me-2"></i>
+                        Resgates Pendentes
+                        <span class="badge bg-light text-success ms-2">{{ rescues|length }}</span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if rescues %}
+                        <div class="row">
+                            {% for rescue in rescues %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100 border-left-success">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h6 class="card-title text-primary font-weight-bold">
+                                                Resgate - {{ rescue.resc_author }}
+                                            </h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ rescue.resc_date.strftime('%d/%m/%Y') }}
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <p class="card-text text-muted small">
+                                                {{ rescue.resc_desc[:100] }}{% if rescue.resc_desc|length > 100 %}...{% endif %}
+                                            </p>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="row text-sm">
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-user text-primary me-2"></i>
+                                                    <strong>Solicitante:</strong>
+                                                    <span class="text-muted">{{ rescue.resc_author }}</span>
+                                                </div>
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-phone text-success me-2"></i>
+                                                    <strong>Telefone:</strong>
+                                                    <span class="text-muted">{{ rescue.resc_phone }}</span>
+                                                </div>
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                                    <strong>Endereço:</strong>
+                                                    <span class="text-muted">
+                                                        {{ rescue.resc_addr }}
+                                                        {% if rescue.resc_num %}, {{ rescue.resc_num }}{% endif %}
+                                                    </span>
+                                                </div>
+                                                {% if rescue.resc_cep %}
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-mail-bulk text-info me-2"></i>
+                                                    <strong>CEP:</strong>
+                                                    <span class="text-muted">{{ rescue.resc_cep }}</span>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        {% if rescue.resc_photo %}
+                                        <div class="mb-3 text-center">
+                                            <img src="{{ rescue.resc_photo }}" 
+                                                 class="img-thumbnail" 
+                                                 style="max-height: 120px; cursor: pointer;"
+                                                 onclick="showImageModal('{{ rescue.resc_photo }}', 'Foto do Resgate')"
+                                                 alt="Foto do resgate">
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="card-footer bg-light">
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <button class="btn btn-danger btn-sm me-md-2" 
+                                                    onclick="handleAction('reject', 'rescue', {{ rescue.resc_id }})">
+                                                <i class="fas fa-times me-1"></i>
+                                                Rejeitar
+                                            </button>
+                                            <button class="btn btn-success btn-sm" 
+                                                    onclick="handleAction('accept', 'rescue', {{ rescue.resc_id }})">
+                                                <i class="fas fa-check me-1"></i>
+                                                Aceitar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum resgate pendente</h5>
+                            <p class="text-muted">Não há solicitações de resgate aguardando aprovação no momento.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para exibir imagens -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Visualizar Imagem</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" alt="Imagem ampliada">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-danger {
+    border-left: 4px solid #dc3545 !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #28a745 !important;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.img-thumbnail:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+</style>
+
+<script>
+// Função para exibir imagens em modal
+function showImageModal(imageSrc, title) {
+    document.getElementById('modalImage').src = imageSrc;
+    document.getElementById('imageModalLabel').textContent = title;
+    var modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+}
+
+// Função para mostrar alertas
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    document.getElementById('alert-container').innerHTML = alertHtml;
+    
+    // Auto-remover o alerta após 5 segundos
+    setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Função principal para gerenciar ações
+function handleAction(action, type, id) {
+    // Desabilitar botões para evitar cliques múltiplos
+    const buttons = document.querySelectorAll(`button[onclick*="${id}"]`);
+    buttons.forEach(btn => btn.disabled = true);
+
+    const actionText = action === 'accept' ? 'aceitar' : 'rejeitar';
+    const typeText = type === 'report' ? 'denúncia' : 'resgate';
+    
+    if (!confirm(`Tem certeza que deseja ${actionText} esta ${typeText}?`)) {
+        // Reabilitar botões se cancelar
+        buttons.forEach(btn => btn.disabled = false);
+        return;
+    }
+
+    const url = `/${action}_${type}/${id}`;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            // Remover o card da tela
+            const card = document.querySelector(`button[onclick*="${id}"]`).closest('.col-md-6, .col-lg-4');
+            if (card) {
+                card.style.transition = 'opacity 0.5s ease-out';
+                card.style.opacity = '0';
+                setTimeout(() => {
+                    card.remove();
+                    // Atualizar contadores
+                    updateCounters();
+                }, 500);
+            }
+        } else {
+            showAlert(data.message, 'danger');
+            // Reabilitar botões em caso de erro
+            buttons.forEach(btn => btn.disabled = false);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        showAlert('Ocorreu um erro ao processar a solicitação.', 'danger');
+        // Reabilitar botões em caso de erro
+        buttons.forEach(btn => btn.disabled = false);
+    });
+}
+
+// Função para atualizar contadores
+function updateCounters() {
+    const reportCards = document.querySelectorAll('.border-left-danger').length;
+    const rescueCards = document.querySelectorAll('.border-left-success').length;
+    
+    // Atualizar badges de contador
+    const reportBadge = document.querySelector('.bg-danger + .card-body').previousElementSibling.querySelector('.badge');
+    const rescueBadge = document.querySelector('.bg-success + .card-body').previousElementSibling.querySelector('.badge');
+    
+    if (reportBadge) reportBadge.textContent = reportCards;
+    if (rescueBadge) rescueBadge.textContent = rescueCards;
+    
+    // Exibir mensagem se não houver mais itens
+    if (reportCards === 0) {
+        const reportContainer = document.querySelector('.bg-danger + .card-body .row');
+        if (reportContainer) {
+            reportContainer.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhuma denúncia pendente</h5>
+                    <p class="text-muted">Não há denúncias aguardando aprovação no momento.</p>
+                </div>
+            `;
+        }
+    }
+    
+    if (rescueCards === 0) {
+        const rescueContainer = document.querySelector('.bg-success + .card-body .row');
+        if (rescueContainer) {
+            rescueContainer.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum resgate pendente</h5>
+                    <p class="text-muted">Não há solicitações de resgate aguardando aprovação no momento.</p>
+                </div>
+            `;
+        }
+    }
+}
+</script>
+
 {% endblock ong_conteudo %}

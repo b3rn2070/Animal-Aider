@@ -68,6 +68,90 @@ def index():
 
     return render_template("index.html", ongs=ongs)
 
+@app.route("/accept_report/<int:report_id>", methods=['POST'])
+def accept_report(report_id):
+    if not session.get('ong_logged'):
+        return jsonify({'success': False, 'message': 'Não autorizado'}), 401
+    
+    try:
+        report = Report.query.get_or_404(report_id)
+        
+        # Verificar se a denúncia é da mesma cidade da ONG
+        if report.rep_city != session.get('ong_city'):
+            return jsonify({'success': False, 'message': 'Denúncia não pertence à sua cidade'}), 403
+        
+        report.rep_status = 'andamento'
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Denúncia aceita com sucesso!'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro ao aceitar denúncia: {str(e)}'}), 500
+
+@app.route("/reject_report/<int:report_id>", methods=['POST'])
+def reject_report(report_id):
+    if not session.get('ong_logged'):
+        return jsonify({'success': False, 'message': 'Não autorizado'}), 401
+    
+    try:
+        report = Report.query.get_or_404(report_id)
+        
+        # Verificar se a denúncia é da mesma cidade da ONG
+        if report.rep_city != session.get('ong_city'):
+            return jsonify({'success': False, 'message': 'Denúncia não pertence à sua cidade'}), 403
+        
+        report.rep_status = 'rejeitado'
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Denúncia rejeitada com sucesso!'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro ao rejeitar denúncia: {str(e)}'}), 500
+
+@app.route("/accept_rescue/<int:rescue_id>", methods=['POST'])
+def accept_rescue(rescue_id):
+    if not session.get('ong_logged'):
+        return jsonify({'success': False, 'message': 'Não autorizado'}), 401
+    
+    try:
+        rescue = Rescue.query.get_or_404(rescue_id)
+        
+        # Verificar se o resgate é da mesma cidade da ONG
+        if rescue.resc_city != session.get('ong_city'):
+            return jsonify({'success': False, 'message': 'Resgate não pertence à sua cidade'}), 403
+        
+        rescue.resc_status = 'andamento'
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Resgate aceito com sucesso!'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro ao aceitar resgate: {str(e)}'}), 500
+
+@app.route("/reject_rescue/<int:rescue_id>", methods=['POST'])
+def reject_rescue(rescue_id):
+    if not session.get('ong_logged'):
+        return jsonify({'success': False, 'message': 'Não autorizado'}), 401
+    
+    try:
+        rescue = Rescue.query.get_or_404(rescue_id)
+        
+        # Verificar se o resgate é da mesma cidade da ONG
+        if rescue.resc_city != session.get('ong_city'):
+            return jsonify({'success': False, 'message': 'Resgate não pertence à sua cidade'}), 403
+        
+        rescue.resc_status = 'rejeitado'
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Resgate rejeitado com sucesso!'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro ao rejeitar resgate: {str(e)}'}), 500
+
 @app.route("/login", methods=['POST', 'GET'])
 def login():
     if session.get('logged') or session.get('ong_logged'):
@@ -722,6 +806,24 @@ def user_rescues():
         logging.error(f"Erro ao carregar resgates do usuário: {e}")
         flash('Erro ao carregar seus resgates.', 'error')
         return redirect(url_for('index'))
+
+@app.route('/ong_ongoing<int:id>', methods=['GET', 'POST'])
+def ong_ongoing(id):
+    if session.get('logged'):
+        flash('Você não pode acessar.', 'error')
+        return redirect(url_for('index'))
+    
+    if not session.get('ong_logged'):
+        return redirect(url_for('ong_login'))
+
+    if request.method == 'GET':
+        return render_template('ong_ongoing.html')
+    
+    rescues = Rescue.query.filter(
+        and_(
+            Rescue.resc_ong_id == id
+        )
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

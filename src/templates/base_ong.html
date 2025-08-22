@@ -35,6 +35,7 @@
                     <a class="nav-link active" aria-current="page" href="{{url_for('index')}}">Home</a>
                     {% if session.get('ong_logged') %}
                         <a class="nav-link" href="{{ url_for('ong_profile') }}">Perfil</a>
+                        <a class="nav-link" href="{{ url_for('ong_ongoing', id=session.get('ong_id')) }}">Ações em andamento</a>
                         <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
                     {% endif %}
                 </div>

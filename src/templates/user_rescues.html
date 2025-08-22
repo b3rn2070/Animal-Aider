@@ -36,35 +36,68 @@
 
         <!-- Estatísticas Rápidas -->
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card text-center border-0 bg-success text-white">
-                    <div class="card-body">
-                        <h3 class="mb-1">{{ rescues|length }}</h3>
-                        <small>Total de Resgates</small>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-success text-white stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-heart me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ rescues|length }}</h4>
+                                <small class="opacity-75">Total</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-center border-0 bg-warning text-dark">
-                    <div class="card-body">
-                        <h3 class="mb-1">{{ rescues|selectattr('resc_status', 'equalto', 'pendente')|list|length }}</h3>
-                        <small>Pendentes</small>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-warning text-dark stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-clock me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ rescues|selectattr('resc_status', 'equalto', 'pendente')|list|length }}</h4>
+                                <small class="opacity-75">Pendentes</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-center border-0 bg-info text-white">
-                    <div class="card-body">
-                        <h3 class="mb-1">{{ rescues|selectattr('resc_status', 'equalto', 'em-andamento')|list|length }}</h3>
-                        <small>Em Andamento</small>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-info text-white stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-ambulance me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ rescues|selectattr('resc_status', 'equalto', 'andamento')|list|length }}</h4>
+                                <small class="opacity-75">Em Andamento</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-center border-0 bg-primary text-white">
-                    <div class="card-body">
-                        <h3 class="mb-1">{{ rescues|selectattr('resc_status', 'equalto', 'concluido')|list|length }}</h3>
-                        <small>Concluídos</small>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-primary text-white stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-check-circle me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ rescues|selectattr('resc_status', 'equalto', 'concluido')|list|length }}</h4>
+                                <small class="opacity-75">Concluídos</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-danger text-white stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-times-circle me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ rescues|selectattr('resc_status', 'equalto', 'rejeitado')|list|length }}</h4>
+                                <small class="opacity-75">Rejeitados</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -75,14 +108,21 @@
             <div class="row">
                 {% for rescue in rescues %}
                     <div class="col-lg-6 col-xl-4 mb-4">
-                        <div class="card rescue-card h-100 position-relative">
+                        <div class="card rescue-card h-100 position-relative {% if rescue.resc_status == 'rejeitado' %}border-danger rejected-card{% endif %}">
+                            {% if rescue.resc_status == 'rejeitado' %}
+                                <div class="rejected-overlay">
+                                    <i class="fas fa-times-circle"></i>
+                                    <span>REJEITADO</span>
+                                </div>
+                            {% endif %}
+                            
                             {% if rescue.resc_photo %}
                                 <img src="{{ url_for('static', filename='uploads/' + rescue.resc_photo) }}" 
-                                     class="card-img-top rescue-image" 
+                                     class="card-img-top rescue-image {% if rescue.resc_status == 'rejeitado' %}rejected-image{% endif %}" 
                                      alt="Foto do resgate"
                                      onerror="this.style.display='none'">
                             {% else %}
-                                <div class="card-img-top rescue-image bg-light d-flex align-items-center justify-content-center">
+                                <div class="card-img-top rescue-image bg-light d-flex align-items-center justify-content-center {% if rescue.resc_status == 'rejeitado' %}rejected-image{% endif %}">
                                     <i class="fas fa-paw text-muted" style="font-size: 3rem;"></i>
                                 </div>
                             {% endif %}
@@ -90,18 +130,26 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h5 class="card-title mb-1">{{ rescue.resc_author }}</h5>
-                                    <span class="status-badge status-{{ rescue.resc_status }}">
+                                    <span class="status-badge status-{{ rescue.resc_status|replace(' ', '-') }}">
                                         {% if rescue.resc_status == 'pendente' %}
                                             <i class="fas fa-clock me-1"></i>Pendente
-                                        {% elif rescue.resc_status == 'em-andamento' %}
+                                        {% elif rescue.resc_status == 'andamento' %}
                                             <i class="fas fa-ambulance me-1"></i>Em Andamento
                                         {% elif rescue.resc_status == 'concluido' %}
                                             <i class="fas fa-check-circle me-1"></i>Concluído
-                                        {% elif rescue.resc_status == 'cancelado' %}
-                                            <i class="fas fa-times-circle me-1"></i>Cancelado
+                                        {% elif rescue.resc_status == 'rejeitado' %}
+                                            <i class="fas fa-times me-1"></i>Rejeitado
                                         {% endif %}
                                     </span>
                                 </div>
+                                
+                                {% if rescue.resc_status == 'rejeitado' %}
+                                    <div class="alert alert-danger alert-sm mb-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>Resgate Rejeitado</strong>
+                                        <small class="d-block mt-1">Esta solicitação não pôde ser atendida pela ONG. Verifique os detalhes e considere fazer uma nova solicitação com mais informações.</small>
+                                    </div>
+                                {% endif %}
                                 
                                 <p class="card-text text-muted mb-2">
                                     {{ rescue.resc_desc[:120] }}{% if rescue.resc_desc|length > 120 %}...{% endif %}
@@ -142,6 +190,13 @@
                                         data-bs-target="#rescueModal{{ rescue.resc_id }}">
                                     <i class="fas fa-eye me-1"></i>Ver Detalhes
                                 </button>
+                                {% if rescue.resc_status == 'rejeitado' %}
+                                    <button class="btn btn-outline-success btn-sm ms-2" 
+                                            onclick="showRetryInfo()"
+                                            title="Fazer nova solicitação">
+                                        <i class="fas fa-redo me-1"></i>Tentar Novamente
+                                    </button>
+                                {% endif %}
                                 <small class="text-muted float-end">
                                     ID: #{{ rescue.resc_id }}
                                 </small>
@@ -153,17 +208,44 @@
                     <div class="modal fade" id="rescueModal{{ rescue.resc_id }}" tabindex="-1">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
-                                <div class="modal-header bg-success text-white">
+                                <div class="modal-header {% if rescue.resc_status == 'rejeitado' %}bg-danger text-white{% else %}bg-success text-white{% endif %}">
                                     <h5 class="modal-title">
-                                        <i class="fas fa-heart me-2"></i>
+                                        {% if rescue.resc_status == 'rejeitado' %}
+                                            <i class="fas fa-times-circle me-2"></i>
+                                        {% else %}
+                                            <i class="fas fa-heart me-2"></i>
+                                        {% endif %}
                                         Resgate - {{ rescue.resc_author }}
                                     </h5>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
+                                    {% if rescue.resc_status == 'rejeitado' %}
+                                        <div class="alert alert-danger mb-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-times-circle fa-2x me-3"></i>
+                                                <div>
+                                                    <h6 class="alert-heading mb-1">Solicitação de Resgate Rejeitada</h6>
+                                                    <p class="mb-0">Esta solicitação foi analisada e rejeitada pela ONG responsável. Isso pode ter ocorrido por diversos motivos, como informações insuficientes, caso já solucionado, localização fora da área de atendimento, ou não se enquadrar nos critérios de resgate.</p>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <div class="mb-0">
+                                                <strong>O que fazer agora?</strong>
+                                                <ul class="mb-0 mt-2">
+                                                    <li>Verifique se todas as informações estavam corretas e completas</li>
+                                                    <li>Se o animal ainda precisa de ajuda, faça uma nova solicitação com mais detalhes</li>
+                                                    <li>Inclua fotos claras da situação do animal</li>
+                                                    <li>Entre em contato diretamente com ONGs da sua região</li>
+                                                    <li>Em emergências, contate o Corpo de Bombeiros (193)</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
                                     {% if rescue.resc_photo %}
                                         <img src="{{ url_for('static', filename='uploads/' + rescue.resc_photo) }}" 
-                                             class="img-fluid mb-3 rounded" 
+                                             class="img-fluid mb-3 rounded {% if rescue.resc_status == 'rejeitado' %}rejected-image{% endif %}" 
                                              alt="Foto do resgate">
                                     {% endif %}
                                     
@@ -214,19 +296,23 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <span class="status-badge status-{{ rescue.resc_status }} me-auto">
+                                    <span class="status-badge status-{{ rescue.resc_status|replace(' ', '-') }} me-auto">
                                         {% if rescue.resc_status == 'pendente' %}
                                             <i class="fas fa-clock me-1"></i>Aguardando Atendimento
-                                        {% elif rescue.resc_status == 'em-andamento' %}
+                                        {% elif rescue.resc_status == 'andamento' %}
                                             <i class="fas fa-ambulance me-1"></i>Equipe a Caminho
                                         {% elif rescue.resc_status == 'concluido' %}
                                             <i class="fas fa-check-circle me-1"></i>Animal Resgatado
-                                        {% elif rescue.resc_status == 'cancelado' %}
-                                            <i class="fas fa-times-circle me-1"></i>Cancelado
+                                        {% elif rescue.resc_status == 'rejeitado' %}
+                                            <i class="fas fa-times-circle me-1"></i>Solicitação Rejeitada
                                         {% endif %}
                                     </span>
                                     
-                                    {% if rescue.resc_phone %}
+                                    {% if rescue.resc_status == 'rejeitado' %}
+                                        <a href="{{ url_for('rescue') }}" class="btn btn-success me-2">
+                                            <i class="fas fa-plus me-1"></i>Nova Solicitação
+                                        </a>
+                                    {% elif rescue.resc_phone and rescue.resc_status != 'rejeitado' %}
                                         <a href="tel:{{ rescue.resc_phone }}" class="btn btn-success btn-sm me-2">
                                             <i class="fas fa-phone me-1"></i>Ligar
                                         </a>
@@ -264,17 +350,21 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-2-4">
                                     <h6><i class="fas fa-clock me-2 text-warning"></i>Pendente</h6>
                                     <p class="small text-muted">Sua solicitação foi recebida e está aguardando análise da nossa equipe.</p>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2-4">
                                     <h6><i class="fas fa-ambulance me-2 text-info"></i>Em Andamento</h6>
-                                    <p class="small text-muted">Uma equipe está trabalhando para o resgate.</p>
+                                    <p class="small text-muted">Uma equipe está trabalhando para o resgate do animal.</p>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2-4">
                                     <h6><i class="fas fa-check-circle me-2 text-success"></i>Concluído</h6>
                                     <p class="small text-muted">O animal foi resgatado com sucesso e está recebendo os cuidados necessários.</p>
+                                </div>
+                                <div class="col-md-2-4">
+                                    <h6><i class="fas fa-times-circle me-2 text-danger"></i>Rejeitado</h6>
+                                    <p class="small text-muted">A solicitação não pôde ser atendida. Você pode fazer uma nova solicitação com mais informações.</p>
                                 </div>
                             </div>
                         </div>
@@ -291,5 +381,125 @@
         </div>
     </div>
 
+    <!-- Modal de Informações sobre Retry -->
+    <div class="modal fade" id="retryInfoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Fazer Nova Solicitação de Resgate
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Sua solicitação foi rejeitada, mas você pode tentar novamente!</strong></p>
+                    <p>Para aumentar as chances de aprovação da nova solicitação:</p>
+                    <ul>
+                        <li>Forneça informações mais detalhadas sobre o estado do animal</li>
+                        <li>Inclua fotos claras mostrando a situação de risco</li>
+                        <li>Especifique o endereço completo e pontos de referência</li>
+                        <li>Descreva claramente o tipo de emergência ou situação</li>
+                        <li>Confirme se você tem autorização para acessar o local</li>
+                        <li>Verifique se sua cidade é atendida pela ONG</li>
+                        <li>Em emergências graves, contate também o Corpo de Bombeiros (193)</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Entendi</button>
+                    <a href="{{ url_for('rescue') }}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>Fazer Nova Solicitação
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .stat-card {
+        transition: transform 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-icon {
+        font-size: 1.5rem;
+    }
+    
+    .rejected-card {
+        position: relative;
+        opacity: 0.85;
+    }
+    
+    .rejected-overlay {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .rejected-image {
+        filter: grayscale(30%) brightness(0.8);
+    }
+    
+    .alert-sm {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .status-rejeitado {
+        background-color: #dc3545 !important;
+        color: white !important;
+    }
+    
+    .status-em-andamento {
+        background-color: #17a2b8 !important;
+        color: white !important;
+    }
+    
+    .rescue-card.rejected-card:hover {
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2) !important;
+    }
+    
+    /* Layout para 5 colunas no desktop */
+    .col-md-2-4 {
+        flex: 0 0 auto;
+        width: 20%;
+    }
+    
+    @media (max-width: 768px) {
+        .col-md-2-4 {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+    }
+    
+    @media (max-width: 992px) and (min-width: 769px) {
+        .col-md-2-4 {
+            width: 50%;
+            margin-bottom: 1rem;
+        }
+    }
+    </style>
+
+    <script>
+    function showRetryInfo() {
+        var modal = new bootstrap.Modal(document.getElementById('retryInfoModal'));
+        modal.show();
+    }
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
 {% endblock conteudo %}

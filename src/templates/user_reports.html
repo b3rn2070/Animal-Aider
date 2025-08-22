@@ -36,35 +36,68 @@
 
         <!-- Estatísticas Rápidas -->
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card text-center border-0 bg-primary text-white">
-                    <div class="card-body">
-                        <h3 class="mb-1">{{ reports|length }}</h3>
-                        <small>Total de Denúncias</small>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-primary text-white stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-clipboard-list me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ reports|length }}</h4>
+                                <small class="opacity-75">Total</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-center border-0 bg-warning text-dark">
-                    <div class="card-body">
-                        <h3 class="mb-1">{{ reports|selectattr('rep_status', 'equalto', 'pendente')|list|length }}</h3>
-                        <small>Pendentes</small>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-warning text-dark stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-clock me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ reports|selectattr('rep_status', 'equalto', 'pendente')|list|length }}</h4>
+                                <small class="opacity-75">Pendentes</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-center border-0 bg-info text-white">
-                    <div class="card-body">
-                        <h3 class="mb-1">{{ reports|selectattr('rep_status', 'equalto', 'em-analise')|list|length }}</h3>
-                        <small>Em Análise</small>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-info text-white stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-search me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ reports|selectattr('rep_status', 'equalto', 'andamento')|list|length }}</h4>
+                                <small class="opacity-75">Em Andamento</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-center border-0 bg-success text-white">
-                    <div class="card-body">
-                        <h3 class="mb-1">{{ reports|selectattr('rep_status', 'equalto', 'resolvida')|list|length }}</h3>
-                        <small>Resolvidas</small>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-success text-white stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-check-circle me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ reports|selectattr('rep_status', 'equalto', 'resolvida')|list|length }}</h4>
+                                <small class="opacity-75">Resolvidas</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <div class="card text-center border-0 bg-danger text-white stat-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-times-circle me-2 stat-icon"></i>
+                            <div>
+                                <h4 class="mb-0">{{ reports|selectattr('rep_status', 'equalto', 'rejeitado')|list|length }}</h4>
+                                <small class="opacity-75">Rejeitadas</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -75,14 +108,21 @@
             <div class="row">
                 {% for report in reports %}
                     <div class="col-lg-6 col-xl-4 mb-4">
-                        <div class="card report-card h-100">
+                        <div class="card report-card h-100 {% if report.rep_status == 'rejeitado' %}border-danger rejected-card{% endif %}">
+                            {% if report.rep_status == 'rejeitado' %}
+                                <div class="rejected-overlay">
+                                    <i class="fas fa-times-circle"></i>
+                                    <span>REJEITADA</span>
+                                </div>
+                            {% endif %}
+                            
                             {% if report.rep_photo %}
                                 <img src="{{ url_for('static', filename='uploads/' + report.rep_photo) }}" 
-                                     class="card-img-top report-image" 
+                                     class="card-img-top report-image {% if report.rep_status == 'rejeitado' %}rejected-image{% endif %}" 
                                      alt="Foto da denúncia"
                                      onerror="this.style.display='none'">
                             {% else %}
-                                <div class="card-img-top report-image bg-light d-flex align-items-center justify-content-center">
+                                <div class="card-img-top report-image bg-light d-flex align-items-center justify-content-center {% if report.rep_status == 'rejeitado' %}rejected-image{% endif %}">
                                     <i class="fas fa-image text-muted" style="font-size: 3rem;"></i>
                                 </div>
                             {% endif %}
@@ -90,18 +130,26 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h5 class="card-title text-truncate me-2">{{ report.rep_title }}</h5>
-                                    <span class="status-badge status-{{ report.rep_status }}">
+                                    <span class="status-badge status-{{ report.rep_status|replace(' ', '-') }}">
                                         {% if report.rep_status == 'pendente' %}
                                             <i class="fas fa-clock me-1"></i>Pendente
-                                        {% elif report.rep_status == 'em-analise' %}
-                                            <i class="fas fa-search me-1"></i>Em Análise
+                                        {% elif report.rep_status == 'andamento' %}
+                                            <i class="fas fa-search me-1"></i>Em Andamento
                                         {% elif report.rep_status == 'resolvida' %}
                                             <i class="fas fa-check me-1"></i>Resolvida
-                                        {% elif report.rep_status == 'rejeitada' %}
+                                        {% elif report.rep_status == 'rejeitado' %}
                                             <i class="fas fa-times me-1"></i>Rejeitada
                                         {% endif %}
                                     </span>
                                 </div>
+                                
+                                {% if report.rep_status == 'rejeitado' %}
+                                    <div class="alert alert-danger alert-sm mb-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>Denúncia Rejeitada</strong>
+                                        <small class="d-block mt-1">Esta denúncia não atendeu aos critérios necessários ou não pôde ser processada pela ONG responsável.</small>
+                                    </div>
+                                {% endif %}
                                 
                                 <p class="card-text text-muted">
                                     {{ report.rep_desc[:100] }}{% if report.rep_desc|length > 100 %}...{% endif %}
@@ -132,6 +180,13 @@
                                         data-bs-target="#reportModal{{ report.rep_id }}">
                                     <i class="fas fa-eye me-1"></i>Ver Detalhes
                                 </button>
+                                {% if report.rep_status == 'rejeitado' %}
+                                    <button class="btn btn-outline-success btn-sm ms-2" 
+                                            onclick="showRetryInfo()"
+                                            title="Fazer nova denúncia">
+                                        <i class="fas fa-redo me-1"></i>Tentar Novamente
+                                    </button>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -140,14 +195,40 @@
                     <div class="modal fade" id="reportModal{{ report.rep_id }}" tabindex="-1">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">{{ report.rep_title }}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                <div class="modal-header {% if report.rep_status == 'rejeitado' %}bg-danger text-white{% endif %}">
+                                    <h5 class="modal-title">
+                                        {% if report.rep_status == 'rejeitado' %}
+                                            <i class="fas fa-times-circle me-2"></i>
+                                        {% endif %}
+                                        {{ report.rep_title }}
+                                    </h5>
+                                    <button type="button" class="btn-close {% if report.rep_status == 'rejeitado' %}btn-close-white{% endif %}" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
+                                    {% if report.rep_status == 'rejeitado' %}
+                                        <div class="alert alert-danger mb-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-times-circle fa-2x me-3"></i>
+                                                <div>
+                                                    <h6 class="alert-heading mb-1">Denúncia Rejeitada</h6>
+                                                    <p class="mb-0">Esta denúncia foi analisada e rejeitada pela ONG responsável. Isso pode ter ocorrido por diversos motivos, como falta de informações suficientes, caso já solucionado, ou não se enquadrar nos critérios de atendimento.</p>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <div class="mb-0">
+                                                <strong>O que fazer agora?</strong>
+                                                <ul class="mb-0 mt-2">
+                                                    <li>Verifique se as informações estavam completas</li>
+                                                    <li>Se o problema persistir, faça uma nova denúncia com mais detalhes</li>
+                                                    <li>Entre em contato diretamente com ONGs da sua região</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
                                     {% if report.rep_photo %}
                                         <img src="{{ url_for('static', filename='uploads/' + report.rep_photo) }}" 
-                                             class="img-fluid mb-3 rounded" 
+                                             class="img-fluid mb-3 rounded {% if report.rep_status == 'rejeitado' %}rejected-image{% endif %}" 
                                              alt="Foto da denúncia">
                                     {% endif %}
                                     
@@ -190,17 +271,22 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <span class="status-badge status-{{ report.rep_status }} me-auto">
+                                    <span class="status-badge status-{{ report.rep_status|replace(' ', '-') }} me-auto">
                                         {% if report.rep_status == 'pendente' %}
                                             <i class="fas fa-clock me-1"></i>Pendente
-                                        {% elif report.rep_status == 'em-analise' %}
-                                            <i class="fas fa-search me-1"></i>Em Análise
+                                        {% elif report.rep_status == 'andamento' %}
+                                            <i class="fas fa-search me-1"></i>Em Andamento
                                         {% elif report.rep_status == 'resolvida' %}
                                             <i class="fas fa-check me-1"></i>Resolvida
-                                        {% elif report.rep_status == 'rejeitada' %}
+                                        {% elif report.rep_status == 'rejeitado' %}
                                             <i class="fas fa-times me-1"></i>Rejeitada
                                         {% endif %}
                                     </span>
+                                    {% if report.rep_status == 'rejeitado' %}
+                                        <a href="{{ url_for('report') }}" class="btn btn-success me-2">
+                                            <i class="fas fa-plus me-1"></i>Nova Denúncia
+                                        </a>
+                                    {% endif %}
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                                 </div>
                             </div>
@@ -227,6 +313,103 @@
             </a>
         </div>
     </div>
+
+    <!-- Modal de Informações sobre Retry -->
+    <div class="modal fade" id="retryInfoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Fazer Nova Denúncia
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Sua denúncia foi rejeitada, mas você pode tentar novamente!</strong></p>
+                    <p>Para aumentar as chances de aprovação da nova denúncia:</p>
+                    <ul>
+                        <li>Forneça informações mais detalhadas sobre a situação</li>
+                        <li>Inclua fotos claras do animal e da situação</li>
+                        <li>Especifique o endereço exato ou ponto de referência</li>
+                        <li>Descreva claramente o tipo de maus-tratos ou situação de risco</li>
+                        <li>Informe seu telefone para contato da ONG</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Entendi</button>
+                    <a href="{{ url_for('report') }}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>Fazer Nova Denúncia
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .stat-card {
+        transition: transform 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-icon {
+        font-size: 1.5rem;
+    }
+    
+    .rejected-card {
+        position: relative;
+        opacity: 0.85;
+    }
+    
+    .rejected-overlay {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .rejected-image {
+        filter: grayscale(30%) brightness(0.8);
+    }
+    
+    .alert-sm {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .status-rejeitado {
+        background-color: #dc3545 !important;
+        color: white !important;
+    }
+    
+    .status-em-andamento {
+        background-color: #17a2b8 !important;
+        color: white !important;
+    }
+    
+    .report-card.rejected-card:hover {
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2) !important;
+    }
+    </style>
+
+    <script>
+    function showRetryInfo() {
+        var modal = new bootstrap.Modal(document.getElementById('retryInfoModal'));
+        modal.show();
+    }
+    </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
