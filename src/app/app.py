@@ -81,6 +81,7 @@ def accept_report(report_id):
             return jsonify({'success': False, 'message': 'Denúncia não pertence à sua cidade'}), 403
         
         report.rep_status = 'andamento'
+        report.rep_ong_id = session.get('ong_id')
         db.session.commit()
         
         return jsonify({'success': True, 'message': 'Denúncia aceita com sucesso!'})
@@ -123,6 +124,7 @@ def accept_rescue(rescue_id):
             return jsonify({'success': False, 'message': 'Resgate não pertence à sua cidade'}), 403
         
         rescue.resc_status = 'andamento'
+        rescue.resc_ong_id = session.get('ong_id')
         db.session.commit()
         
         return jsonify({'success': True, 'message': 'Resgate aceito com sucesso!'})
@@ -151,6 +153,79 @@ def reject_rescue(rescue_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Erro ao rejeitar resgate: {str(e)}'}), 500
+    
+@app.route('/delReport/<int:id>', methods=['POST'])
+def delReport(id):
+    user_id = session.get('user_id')
+
+    if not user_id:
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': 'Usuário não autenticado.'})
+        flash('Usuário não autenticado.', 'warning')
+        return redirect(url_for('login'))
+
+    report = Report.query.filter(
+        and_(
+            Report.rep_id == id,
+            Report.rep_user_id == user_id
+        )
+    ).first()
+
+    if report:
+        db.session.delete(report)
+        db.session.commit()
+        message = 'Denúncia deletada com sucesso!'
+        
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': True, 'message': message})
+        
+        flash(message, 'success')
+    else:
+        message = 'Denúncia não encontrada ou acesso negado.'
+        
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': message})
+        
+        flash(message, 'danger')
+
+    return redirect(url_for('user_reports'))  # ou a rota apropriada para onde redirecionar
+
+@app.route('/delRescue/<int:id>', methods=['POST'])
+def delRescue(id):
+    user_id = session.get('user_id')
+
+    if not user_id:
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': 'Usuário não autenticado.'})
+        flash('Usuário não autenticado.', 'warning')
+        return redirect(url_for('login'))
+
+    rescue = Rescue.query.filter(
+        and_(
+            Rescue.resc_id == id,  # Note: mudei de rep_id para resc_id
+            Rescue.resc_user_id == user_id  # Note: mudei de rep_user_id para resc_user_id
+        )
+    ).first()
+
+    if rescue:
+        db.session.delete(rescue)
+        db.session.commit()
+        message = 'Resgate deletado com sucesso!'
+        
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': True, 'message': message})
+        
+        flash(message, 'success')
+    else:
+        message = 'Resgate não encontrado ou acesso negado.'
+        
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': message})
+        
+        flash(message, 'error')
+
+    return redirect(url_for('user_rescues'))
+        
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
@@ -807,7 +882,7 @@ def user_rescues():
         flash('Erro ao carregar seus resgates.', 'error')
         return redirect(url_for('index'))
 
-@app.route('/ong_ongoing<int:id>', methods=['GET', 'POST'])
+@app.route('/ong_ongoing/<int:id>', methods=['GET', 'POST'])
 def ong_ongoing(id):
     if session.get('logged'):
         flash('Você não pode acessar.', 'error')
@@ -815,15 +890,22 @@ def ong_ongoing(id):
     
     if not session.get('ong_logged'):
         return redirect(url_for('ong_login'))
-
-    if request.method == 'GET':
-        return render_template('ong_ongoing.html')
     
     rescues = Rescue.query.filter(
         and_(
             Rescue.resc_ong_id == id
         )
     )
+    
+    reports = Report.query.filter(
+        and_(
+            Report.rep_ong_id == id
+        )
+    )
+
+    if request.method == 'GET':
+        return render_template('ong_ongoing.html', rescues=rescues, reports=reports)
+    
 
 if __name__ == "__main__":
     app.run(debug=True)

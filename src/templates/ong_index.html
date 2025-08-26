@@ -76,10 +76,10 @@
 
                                         {% if report.rep_photo %}
                                         <div class="mb-3 text-center">
-                                            <img src="{{ report.rep_photo }}" 
+                                            <img src="../static/uploads/{{ report.rep_photo }}" 
                                                  class="img-thumbnail" 
                                                  style="max-height: 120px; cursor: pointer;"
-                                                 onclick="showImageModal('{{ report.rep_photo }}', 'Foto da Denúncia')"
+                                                 onclick="showImageModal('../static/uploads/{{ report.rep_photo }}', 'Foto da Denúncia')"
                                                  alt="Foto da denúncia">
                                         </div>
                                         {% endif %}
@@ -181,10 +181,10 @@
 
                                         {% if rescue.resc_photo %}
                                         <div class="mb-3 text-center">
-                                            <img src="{{ rescue.resc_photo }}" 
+                                            <img src="../static/uploads/{{ rescue.resc_photo }}" 
                                                  class="img-thumbnail" 
                                                  style="max-height: 120px; cursor: pointer;"
-                                                 onclick="showImageModal('{{ rescue.resc_photo }}', 'Foto do Resgate')"
+                                                 onclick="showImageModal('../static/uploads/{{ rescue.resc_photo }}', 'Foto do Resgate')"
                                                  alt="Foto do resgate">
                                         </div>
                                         {% endif %}
