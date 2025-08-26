@@ -906,6 +906,71 @@ def ong_ongoing(id):
     if request.method == 'GET':
         return render_template('ong_ongoing.html', rescues=rescues, reports=reports)
     
+@app.route('/finish_report/<int:id>', methods=['POST'])
+def finish_report(id):
+    user_id = Report.rep_user_id
+
+    if not user_id:
+        message = 'Usuário não autenticado.'
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'warning')
+        return redirect(url_for('login'))
+
+    report = Report.query.filter(
+        and_(
+            Report.rep_id == id,
+            Report.rep_user_id == user_id
+        )
+    ).first()
+
+    if report:
+        report.rep_status = 'finalizado'
+        db.session.commit()
+        message = 'Denúncia finalizada com sucesso!'
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': True, 'message': message})
+        flash(message, 'success')
+    else:
+        message = 'Denúncia não encontrada ou acesso negado.'
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'danger')
+
+    return redirect(url_for('user_reports'))
+
+@app.route('/finish_rescue/<int:id>', methods=['POST'])
+def finish_rescue(id):
+    user_id = Rescue.resc_user_id
+
+    if not user_id:
+        message = 'Usuário não autenticado.'
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'warning')
+        return redirect(url_for('login'))
+
+    rescue = Rescue.query.filter(
+        and_(
+            Rescue.resc_id == id,
+            Rescue.resc_user_id == user_id
+        )
+    ).first()
+
+    if rescue:
+        rescue.resc_status = 'finalizado'
+        db.session.commit()
+        message = 'Resgate finalizado com sucesso!'
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': True, 'message': message})
+        flash(message, 'success')
+    else:
+        message = 'Resgate não encontrado ou acesso negado.'
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'danger')
+
+    return redirect(url_for('user_rescues'))
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -35,15 +35,19 @@
                                     </span>
                                 </div>
                                 <div class="card-body">
-                                    <p class="card-text"><strong>Animal:</strong> {{ rescue.resc_animal }}</p>x
-                                    <p class="card-text"><strong>Localização:</strong> {{ rescue.resc_location }}</p>
+                                    <p class="card-text"><strong>Autor:</strong> {{ rescue.resc_author }}</p>
+                                    <p class="card-text"><strong>Telefone:</strong> {{ rescue.resc_phone }}</p>
+                                    <p class="card-text"><strong>Cidade:</strong> {{ rescue.resc_city }}</p>
+                                    {% if rescue.resc_addr %}
+                                    <p class="card-text"><strong>Endereço:</strong> {{ rescue.resc_addr }}{% if rescue.resc_num %}, {{ rescue.resc_num }}{% endif %}</p>
+                                    {% endif %}
                                     <p class="card-text"><strong>Descrição:</strong></p>
                                     <p class="card-text text-muted">{{ rescue.resc_desc[:100] }}{% if rescue.resc_desc|length > 100 %}...{% endif %}</p>
                                     <p class="card-text"><small class="text-muted">Criado em: {{ rescue.resc_date.strftime('%d/%m/%Y às %H:%M') }}</small></p>
                                     
-                                    {% if rescue.resc_image %}
+                                    {% if rescue.resc_photo %}
                                     <div class="mb-3">
-                                        <img src="{{ url_for('static', filename='uploads/' + rescue.resc_image) }}" 
+                                        <img src="{{ url_for('static', filename='uploads/' + rescue.resc_photo) }}" 
                                              class="img-thumbnail" style="max-width: 100px; max-height: 100px;" alt="Imagem do resgate">
                                     </div>
                                     {% endif %}
@@ -57,9 +61,9 @@
                                     {% endif %}
                                     <button type="button" class="btn btn-info btn-sm ms-2" data-bs-toggle="modal" 
                                             data-bs-target="#detailModal" onclick="showDetails('rescue', {{ rescue.resc_id }}, 
-                                            '{{ rescue.resc_animal }}', '{{ rescue.resc_location }}', 
+                                            '{{ rescue.resc_author }}', '{{ rescue.resc_city }}', 
                                             '{{ rescue.resc_desc }}', '{{ rescue.resc_date.strftime('%d/%m/%Y às %H:%M') }}',
-                                            '{{ rescue.resc_image or '' }}')">
+                                            '{{ rescue.resc_photo or '' }}', '{{ rescue.resc_phone }}', '{{ rescue.resc_addr or '' }}', '{{ rescue.resc_num or '' }}')">>
                                         Ver Detalhes
                                     </button>
                                 </div>
@@ -90,15 +94,21 @@
                                     </span>
                                 </div>
                                 <div class="card-body">
-                                    <p class="card-text"><strong>Animal:</strong> {{ report.rep_animal }}</p>
-                                    <p class="card-text"><strong>Localização:</strong> {{ report.rep_location }}</p>
+                                    <p class="card-text"><strong>Título:</strong> {{ report.rep_title }}</p>
+                                    <p class="card-text"><strong>Cidade:</strong> {{ report.rep_city }}</p>
+                                    {% if report.rep_address %}
+                                    <p class="card-text"><strong>Endereço:</strong> {{ report.rep_address }}</p>
+                                    {% endif %}
+                                    {% if report.rep_phone %}
+                                    <p class="card-text"><strong>Telefone:</strong> {{ report.rep_phone }}</p>
+                                    {% endif %}
                                     <p class="card-text"><strong>Descrição:</strong></p>
                                     <p class="card-text text-muted">{{ report.rep_desc[:100] }}{% if report.rep_desc|length > 100 %}...{% endif %}</p>
                                     <p class="card-text"><small class="text-muted">Criado em: {{ report.rep_date.strftime('%d/%m/%Y às %H:%M') }}</small></p>
                                     
-                                    {% if report.rep_image %}
+                                    {% if report.rep_photo %}
                                     <div class="mb-3">
-                                        <img src="{{ url_for('static', filename='uploads/' + report.rep_image) }}" 
+                                        <img src="{{ url_for('static', filename='uploads/' + report.rep_photo) }}" 
                                              class="img-thumbnail" style="max-width: 100px; max-height: 100px;" alt="Imagem da denúncia">
                                     </div>
                                     {% endif %}
@@ -112,9 +122,9 @@
                                     {% endif %}
                                     <button type="button" class="btn btn-info btn-sm ms-2" data-bs-toggle="modal" 
                                             data-bs-target="#detailModal" onclick="showDetails('report', {{ report.rep_id }}, 
-                                            '{{ report.rep_animal }}', '{{ report.rep_location }}', 
+                                            '{{ report.rep_title }}', '{{ report.rep_city }}', 
                                             '{{ report.rep_desc }}', '{{ report.rep_date.strftime('%d/%m/%Y às %H:%M') }}',
-                                            '{{ report.rep_image or '' }}')">
+                                            '{{ report.rep_photo or '' }}', '{{ report.rep_phone or '' }}', '{{ report.rep_address or '' }}', '')">>
                                         Ver Detalhes
                                     </button>
                                 </div>
@@ -145,8 +155,10 @@
                     <div class="col-md-6">
                         <p><strong>Tipo:</strong> <span id="modal-type"></span></p>
                         <p><strong>ID:</strong> <span id="modal-id"></span></p>
-                        <p><strong>Animal:</strong> <span id="modal-animal"></span></p>
-                        <p><strong>Localização:</strong> <span id="modal-location"></span></p>
+                        <p><strong>Título/Autor:</strong> <span id="modal-title"></span></p>
+                        <p><strong>Cidade:</strong> <span id="modal-city"></span></p>
+                        <p><strong>Telefone:</strong> <span id="modal-phone"></span></p>
+                        <p><strong>Endereço:</strong> <span id="modal-address"></span></p>
                         <p><strong>Data:</strong> <span id="modal-date"></span></p>
                     </div>
                     <div class="col-md-6">
@@ -176,13 +188,24 @@
 <script>
 let currentAction = { type: '', id: '' };
 
-function showDetails(type, id, animal, location, description, date, image) {
+function showDetails(type, id, title, city, description, date, image, phone, address, number) {
     currentAction = { type, id };
     
     document.getElementById('modal-type').textContent = type === 'rescue' ? 'Resgate' : 'Denúncia';
     document.getElementById('modal-id').textContent = '#' + id;
-    document.getElementById('modal-animal').textContent = animal;
-    document.getElementById('modal-location').textContent = location;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-city').textContent = city;
+    document.getElementById('modal-phone').textContent = phone || 'Não informado';
+    
+    // Para resgates, mostrar endereço completo; para denúncias, apenas o endereço
+    if (type === 'rescue' && address) {
+        document.getElementById('modal-address').textContent = address + (number ? ', ' + number : '');
+    } else if (type === 'report' && address) {
+        document.getElementById('modal-address').textContent = address;
+    } else {
+        document.getElementById('modal-address').textContent = 'Não informado';
+    }
+    
     document.getElementById('modal-description').textContent = description;
     document.getElementById('modal-date').textContent = date;
     
