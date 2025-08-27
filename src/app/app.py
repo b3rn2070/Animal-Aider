@@ -908,19 +908,22 @@ def ong_ongoing(id):
     
 @app.route('/finish_report/<int:id>', methods=['POST'])
 def finish_report(id):
-    user_id = Report.rep_user_id
+    # Pegar o ID da ONG da sessão (não do usuário)
+    ong_id = session.get('ong_id')
 
-    if not user_id:
-        message = 'Usuário não autenticado.'
+    if not ong_id:
+        message = 'ONG não autenticada.'
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({'success': False, 'message': message})
         flash(message, 'warning')
-        return redirect(url_for('login'))
+        return redirect(url_for('ong_login'))
 
+    # Buscar denúncia que pertence a esta ONG e está aceita
     report = Report.query.filter(
         and_(
             Report.rep_id == id,
-            Report.rep_user_id == user_id
+            Report.rep_ong_id == ong_id,
+            Report.rep_status == 'andamento'  # Só pode finalizar se estiver aceita
         )
     ).first()
 
@@ -932,28 +935,31 @@ def finish_report(id):
             return jsonify({'success': True, 'message': message})
         flash(message, 'success')
     else:
-        message = 'Denúncia não encontrada ou acesso negado.'
+        message = 'Denúncia não encontrada, não pertence a esta ONG ou não pode ser finalizada.'
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({'success': False, 'message': message})
         flash(message, 'danger')
 
-    return redirect(url_for('user_reports'))
+    return redirect(url_for('ong_ongoing', id=ong_id))
 
 @app.route('/finish_rescue/<int:id>', methods=['POST'])
 def finish_rescue(id):
-    user_id = Rescue.resc_user_id
+    # Pegar o ID da ONG da sessão (não do usuário)
+    ong_id = session.get('ong_id')
 
-    if not user_id:
-        message = 'Usuário não autenticado.'
+    if not ong_id:
+        message = 'ONG não autenticada.'
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({'success': False, 'message': message})
         flash(message, 'warning')
-        return redirect(url_for('login'))
+        return redirect(url_for('ong_login'))
 
+    # Buscar resgate que pertence a esta ONG e está aceito
     rescue = Rescue.query.filter(
         and_(
             Rescue.resc_id == id,
-            Rescue.resc_user_id == user_id
+            Rescue.resc_ong_id == ong_id,
+            Rescue.resc_status == 'andamento'  # Só pode finalizar se estiver aceito
         )
     ).first()
 
@@ -965,12 +971,12 @@ def finish_rescue(id):
             return jsonify({'success': True, 'message': message})
         flash(message, 'success')
     else:
-        message = 'Resgate não encontrado ou acesso negado.'
+        message = 'Resgate não encontrado, não pertence a esta ONG ou não pode ser finalizado.'
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({'success': False, 'message': message})
         flash(message, 'danger')
 
-    return redirect(url_for('user_rescues'))
+    return redirect(url_for('ong_ongoing', id=ong_id))
 
 if __name__ == "__main__":
     app.run(debug=True)

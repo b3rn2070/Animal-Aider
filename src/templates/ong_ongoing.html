@@ -53,7 +53,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="card-footer">
-                                    {% if rescue.resc_status == 'aceito' %}
+                                    {% if rescue.resc_status == 'andamento' %}
                                         <button type="button" class="btn btn-success btn-sm" 
                                                 onclick="finishAction('rescue', {{ rescue.resc_id }})">
                                             <i class="bi bi-check-circle"></i> Finalizar Resgate
@@ -114,7 +114,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="card-footer">
-                                    {% if report.rep_status == 'aceito' %}
+                                    {% if report.rep_status == 'andamento' %}
                                         <button type="button" class="btn btn-success btn-sm" 
                                                 onclick="finishAction('report', {{ report.rep_id }})">
                                             <i class="bi bi-check-circle"></i> Finalizar Denúncia

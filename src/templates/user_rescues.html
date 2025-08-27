@@ -81,8 +81,8 @@
                         <div class="d-flex align-items-center justify-content-center">
                             <i class="fas fa-check-circle me-2 stat-icon"></i>
                             <div>
-                                <h4 class="mb-0">{{ rescues|selectattr('resc_status', 'equalto', 'concluido')|list|length }}</h4>
-                                <small class="opacity-75">Concluídos</small>
+                                <h4 class="mb-0">{{ rescues|selectattr('resc_status', 'equalto', 'finalizado')|list|length }}</h4>
+                                <small class="opacity-75">Finalizados</small>
                             </div>
                         </div>
                     </div>
@@ -135,8 +135,8 @@
                                             <i class="fas fa-clock me-1"></i>Pendente
                                         {% elif rescue.resc_status == 'andamento' %}
                                             <i class="fas fa-ambulance me-1"></i>Em Andamento
-                                        {% elif rescue.resc_status == 'concluido' %}
-                                            <i class="fas fa-check-circle me-1"></i>Concluído
+                                        {% elif rescue.resc_status == 'finalizado' %}
+                                            <i class="fas fa-check-circle me-1"></i>Finalizado
                                         {% elif rescue.resc_status == 'rejeitado' %}
                                             <i class="fas fa-times me-1"></i>Rejeitado
                                         {% endif %}
@@ -302,7 +302,7 @@
                                             <i class="fas fa-clock me-1"></i>Aguardando Atendimento
                                         {% elif rescue.resc_status == 'andamento' %}
                                             <i class="fas fa-ambulance me-1"></i>Equipe a Caminho
-                                        {% elif rescue.resc_status == 'concluido' %}
+                                        {% elif rescue.resc_status == 'finalizado' %}
                                             <i class="fas fa-check-circle me-1"></i>Animal Resgatado
                                         {% elif rescue.resc_status == 'rejeitado' %}
                                             <i class="fas fa-times-circle me-1"></i>Solicitação Rejeitada
@@ -360,7 +360,7 @@
                                     <p class="small text-muted">Uma equipe está trabalhando para o resgate do animal.</p>
                                 </div>
                                 <div class="col-md-2-4">
-                                    <h6><i class="fas fa-check-circle me-2 text-success"></i>Concluído</h6>
+                                    <h6><i class="fas fa-check-circle me-2 text-success"></i>Finalizado</h6>
                                     <p class="small text-muted">O animal foi resgatado com sucesso e está recebendo os cuidados necessários.</p>
                                 </div>
                                 <div class="col-md-2-4">

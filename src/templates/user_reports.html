@@ -81,8 +81,8 @@
                         <div class="d-flex align-items-center justify-content-center">
                             <i class="fas fa-check-circle me-2 stat-icon"></i>
                             <div>
-                                <h4 class="mb-0">{{ reports|selectattr('rep_status', 'equalto', 'resolvida')|list|length }}</h4>
-                                <small class="opacity-75">Resolvidas</small>
+                                <h4 class="mb-0">{{ reports|selectattr('rep_status', 'equalto', 'finalizado')|list|length }}</h4>
+                                <small class="opacity-75">Finalizados</small>
                             </div>
                         </div>
                     </div>
@@ -135,8 +135,8 @@
                                             <i class="fas fa-clock me-1"></i>Pendente
                                         {% elif report.rep_status == 'andamento' %}
                                             <i class="fas fa-search me-1"></i>Em Andamento
-                                        {% elif report.rep_status == 'resolvida' %}
-                                            <i class="fas fa-check me-1"></i>Resolvida
+                                        {% elif report.rep_status == 'finalizado' %}
+                                            <i class="fas fa-check me-1"></i>Finalizado
                                         {% elif report.rep_status == 'rejeitado' %}
                                             <i class="fas fa-times me-1"></i>Rejeitada
                                         {% endif %}
@@ -276,8 +276,8 @@
                                             <i class="fas fa-clock me-1"></i>Pendente
                                         {% elif report.rep_status == 'andamento' %}
                                             <i class="fas fa-search me-1"></i>Em Andamento
-                                        {% elif report.rep_status == 'resolvida' %}
-                                            <i class="fas fa-check me-1"></i>Resolvida
+                                        {% elif report.rep_status == 'finalizado' %}
+                                            <i class="fas fa-check me-1"></i>Finalizado
                                         {% elif report.rep_status == 'rejeitado' %}
                                             <i class="fas fa-times me-1"></i>Rejeitada
                                         {% endif %}
