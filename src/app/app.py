@@ -978,5 +978,20 @@ def finish_rescue(id):
 
     return redirect(url_for('ong_ongoing', id=ong_id))
 
+@app.route('/ong_events/<int:id>', methods=['GET', 'POST'])
+def ong_events(id):
+    if session.get('logged'):
+        flash('Você não pode acessar.', 'error')
+        return redirect(url_for('index'))
+    
+    if not session.get('ong_logged'):
+        return redirect(url_for('ong_login'))
+
+    if request.method == 'GET':
+        return render_template('ong_events.html')
+    
+    if request.method == 'POST':
+        return render_template('ong_events.html')        
+
 if __name__ == "__main__":
     app.run(debug=True)
