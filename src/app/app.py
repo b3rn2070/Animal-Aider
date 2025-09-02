@@ -62,7 +62,7 @@ def index():
 
     if session.get('logged') and request.method == 'GET':
         city = session.get('user_city')
-        ongs = Ong.query.filter_by(ong_city=city).all()
+        ongs = Ong.query.filter(Ong.ong_city.ilike(f'%{city}%')).all()
     else:
         ongs = Ong.query.all()
 

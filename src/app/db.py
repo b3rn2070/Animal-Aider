@@ -78,6 +78,21 @@ class Report(db.Model):
     
     def __repr__(self):
         return f'<Report {self.rep_id}: {self.rep_title}>'
+    
+class Events(db.Model):
+    __tablename__ = 'tbEvents'
+
+    event_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    event_title = db.Column(db.String(100), nullable=False)
+    event_description = db.Column(db.Text, nullable=True)
+    event_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    event_location = db.Column(db.String(200), nullable=False)
+    event_city = db.Column(db.String(100), nullable=True)
+    event_state = db.Column(db.String(2), nullable=True)  # UF (ex: SP, RJ)
+    event_cep = db.Column(db.String(9), nullable=True)
+    event_photo = db.Column(db.String, nullable=True)  # Caminho para imagem do evento
+    event_created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    event_ong_id = db.Column(db.Integer, db.ForeignKey('tbOngs.ong_id'), nullable=False)
 
 class Ong(db.Model):
     __tablename__ = 'tbOngs'
