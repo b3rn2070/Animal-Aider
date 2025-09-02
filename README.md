@@ -24,7 +24,7 @@ Facilitar o resgate de animais abandonados nas ruas, usando tecnologia para cone
 
 ## Tecnologias Utilizadas
 
-- Backend com Python e Flask (ou framework equivalente)
+- Backend com Python e Flask
 - Banco de dados para armazenamento de denúncias e cadastro das ONGs
 - Integração de geolocalização para enviar denúncias às ONGs próximas
 - Interface web intuitiva para usuários e organizações
@@ -42,8 +42,6 @@ Facilitar o resgate de animais abandonados nas ruas, usando tecnologia para cone
 ## Contato e Colaboração
 
 Este é um projeto desenvolvido por Bernardo Coelho de Freitas, Felipe Silamã, Gabriel Fernandes Stringuetti, Nicolas Phillip Castarde e Pedro Henrique Lopes Scapinelli para a Etec Vasco Antônio Venchiarutti – Jundiaí/SP.
-
-Para dúvidas, sugestões ou colaborações, entre em contato com os autores.
 
 ---
 
