@@ -180,7 +180,7 @@
                                         data-bs-target="#reportModal{{ report.rep_id }}">
                                     <i class="fas fa-eye me-1"></i>Ver Detalhes
                                 </button>
-                                {% if report.resc_status == 'pendente' %} <button type="button" onclick="handleDeleteAction('report', {{ report.rep_id }})">Excluir</button> {% endif %}                                {% if report.rep_status == 'rejeitado' %}
+                                {% if report.rep_status == 'pendente' %} <button type="button" onclick="handleDeleteAction('report', {{ report.rep_id }})">Excluir</button> {% endif %}                                {% if report.rep_status == 'rejeitado' %}
                                     <button class="btn btn-outline-success btn-sm ms-2" 
                                             onclick="showRetryInfo()"
                                             title="Fazer nova denúncia">

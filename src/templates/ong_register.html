@@ -35,10 +35,15 @@
         <div class="invalid-feedback">Por favor, insira o CEP.</div>
       </div>
 
-      <div class="mb-3">
+      <div class="col-md-6">
         <label for="city" class="form-label fw-semibold">Cidade:</label>
-        <input type="text" id="city" name="city" class="form-control" required>
-        <div class="invalid-feedback">Por favor, insira a cidade.</div>
+        <select id="city" name="city" class="form-select" required>
+          <option value="" selected disabled>Selecione uma cidade</option>
+          {% for city in cities %}
+          <option value="{{ city }}">{{ city }}</option>
+          {% endfor %}
+        </select>
+        <div class="invalid-feedback">Selecione uma cidade.</div>
       </div>
 
       <div class="mb-3">

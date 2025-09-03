@@ -586,7 +586,7 @@ def ong_register():
             flash('Erro no cadastro.', 'info')
             return redirect(url_for('ong_register'))    
         
-    return render_template('ong_register.html')
+    return render_template('ong_register.html', cities=cities)
 
 @app.route('/get_address/<cep>')
 def get_address(cep):
