@@ -987,11 +987,16 @@ def ong_events(id):
     if not session.get('ong_logged'):
         return redirect(url_for('ong_login'))
 
+    events = Events.query.filter(and_(
+        Events.event_ong_id == id
+    ))
+
     if request.method == 'GET':
-        return render_template('ong_events.html')
+        return render_template('ong_events.html', events=events)
     
     if request.method == 'POST':
-        return render_template('ong_events.html')        
+
+        return render_template('ong_events.html', events=events)        
 
 if __name__ == "__main__":
     app.run(debug=True)
