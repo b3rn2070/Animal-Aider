@@ -88,10 +88,12 @@ class Events(db.Model):
     event_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     event_location = db.Column(db.String(200), nullable=False)
     event_city = db.Column(db.String(100), nullable=True)
-    event_cep = db.Column(db.String(9), nullable=True)
     event_photo = db.Column(db.String, nullable=True)  # Caminho para imagem do evento
     event_created_at = db.Column(db.DateTime, default=datetime.utcnow)
     event_ong_id = db.Column(db.Integer, db.ForeignKey('tbOngs.ong_id'), nullable=False)
+
+    def __repr__(self):
+        return f'<Events {self.rep_id}: {self.rep_title}>'
 
 class Ong(db.Model):
     __tablename__ = 'tbOngs'
