@@ -22,56 +22,65 @@
 
     <style>
         :root {
-            --primary-green: #4a9b8e;
-            --light-green: #6db5a6;
-            --dark-green: #3a7a70;
-            --accent-color: #f4a261;
-            --text-dark: #2d3748;
-            --text-light: #718096;
-            --bg-light: #f7fafc;
+            --primary-orange: #c95d05;
+            --light-orange: #c95d05;
+            --dark-blue: #1d4ed8;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --border-color: #e5e7eb;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-light);
             color: var(--text-dark);
+            padding-top: 80px;
         }
 
         /* Navbar Styles */
         .navbar {
-            background: linear-gradient(135deg, var(--primary-green) 0%, var(--light-green) 100%);
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--light-orange) 100%);
             box-shadow: 0 2px 20px rgba(0,0,0,0.1);
             padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1030;
         }
 
         .navbar-brand {
             display: flex;
             align-items: center;
             font-weight: 700;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: white !important;
             text-decoration: none;
         }
 
         .brand-icon {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 12px;
-            font-size: 1.2rem;
-            color: var(--primary-green);
+            margin-right: 10px;
+            font-size: 1.1rem;
+            color: var(--primary-blue);
         }
 
         .nav-link {
             color: white !important;
             font-weight: 500;
-            padding: 0.75rem 1.25rem !important;
-            margin: 0 0.25rem;
-            border-radius: 25px;
+            padding: 0.6rem 1rem !important;
+            margin: 0 0.2rem;
+            border-radius: 20px;
             transition: all 0.3s ease;
             position: relative;
         }
@@ -79,218 +88,242 @@
         .nav-link:hover,
         .nav-link.active {
             background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
-        .nav-link.btn-outline-light {
-            border: 2px solid white;
-            margin-left: 1rem;
+        .nav-link i {
+            margin-right: 6px;
         }
 
-        .nav-link.btn-primary {
+        /* User Navigation Styles */
+        .user-nav .nav-link {
+            border: 1px solid transparent;
+        }
+
+        .user-nav .nav-link.profile-link {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-nav .nav-link.logout-link {
+            background: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .user-nav .nav-link.logout-link:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        /* Guest Navigation Styles */
+        .guest-nav .nav-link.login-link {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .guest-nav .nav-link.ong-login-link {
             background: var(--accent-color);
-            border: 2px solid var(--accent-color);
-            color: white !important;
-            margin-left: 0.5rem;
+            border: 1px solid var(--accent-color);
+            font-weight: 600;
         }
 
-        .nav-link.btn-primary:hover {
-            background: #e76f51;
-            border-color: #e76f51;
-            transform: translateY(-2px);
+        .guest-nav .nav-link.ong-login-link:hover {
+            background: #d97706;
+            border-color: #d97706;
         }
 
-        /* Hero Section */
-        .hero-section {
-            background: linear-gradient(135deg, rgba(74, 155, 142, 0.9) 0%, rgba(109, 181, 166, 0.9) 100%),
-                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%234a9b8e" width="1200" height="600"/><circle fill="%236db5a6" cx="200" cy="100" r="80" opacity="0.3"/><circle fill="%236db5a6" cx="800" cy="200" r="60" opacity="0.2"/><circle fill="%236db5a6" cx="1000" cy="400" r="100" opacity="0.3"/></svg>');
-            background-size: cover;
-            background-position: center;
-            padding: 120px 0 80px;
-            color: white;
-            position: relative;
-            overflow: hidden;
+        /* Main Content */
+        main {
+            min-height: calc(100vh - 160px);
+            padding: 2rem 0;
         }
 
-        .hero-content h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .hero-content p {
-            font-size: 1.3rem;
-            opacity: 0.9;
-            margin-bottom: 2rem;
-            max-width: 600px;
-        }
-
-        /* Cards Section */
-        .cards-section {
-            padding: 80px 0;
+        /* Page Header */
+        .page-header {
             background: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .section-title {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .section-title h2 {
+        .page-header h1 {
             font-size: 2.5rem;
             font-weight: 700;
             color: var(--text-dark);
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
 
-        .section-title p {
+        .page-header p {
+            color: var(--text-light);
             font-size: 1.1rem;
-            color: var(--text-light);
-            max-width: 600px;
-            margin: 0 auto;
+            margin: 0;
         }
 
-        .feature-card {
+        /* Cards */
+        .content-card {
             background: white;
-            border-radius: 20px;
-            padding: 3rem 2rem;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
             transition: all 0.3s ease;
-            border: none;
-            height: 100%;
         }
 
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        .content-card:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
         }
 
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 2rem;
-            color: white;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
+        .content-card .card-header {
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            font-weight: 600;
             color: var(--text-dark);
-            margin-bottom: 1rem;
         }
 
-        .feature-card p {
-            color: var(--text-light);
-            line-height: 1.7;
-            margin-bottom: 2rem;
+        .content-card .card-body {
+            padding: 1.5rem;
         }
 
-        .btn-feature {
-            background: var(--primary-green);
-            color: white;
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary-blue);
             border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
+            border-radius: 20px;
+            padding: 0.6rem 1.5rem;
             font-weight: 600;
             transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
         }
 
-        .btn-feature:hover {
-            background: var(--dark-green);
+        .btn-primary:hover {
+            background: var(--dark-blue);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            border: none;
+            border-radius: 20px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            border: none;
+            border-radius: 20px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
             color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            border: none;
+            border-radius: 20px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.4rem 1rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-pendente {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-aceito {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejeitado {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-finalizado {
+            background: #e0e7ff;
+            color: #3730a3;
         }
 
         /* Footer */
         footer {
             background: var(--text-dark);
             color: white;
-            padding: 60px 0 30px;
+            padding: 3rem 0 2rem;
+            margin-top: 4rem;
         }
 
-        .footer-section h5 {
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: white;
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
         }
 
-        .footer-section ul {
-            list-style: none;
-            padding: 0;
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            font-size: 1.2rem;
         }
 
-        .footer-section ul li {
-            margin-bottom: 0.5rem;
+        .footer-brand i {
+            margin-right: 8px;
+            color: var(--light-blue);
         }
 
-        .footer-section ul li a {
-            color: rgba(255,255,255,0.8);
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
             transition: color 0.3s ease;
         }
 
-        .footer-section ul li a:hover {
-            color: var(--light-green);
-        }
-
-        .social-icons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .social-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--primary-green);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .social-icon:hover {
-            background: var(--light-green);
-            color: white;
-            transform: translateY(-2px);
+        .footer-links a:hover {
+            color: var(--light-blue);
         }
 
         .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 2rem;
             padding-top: 2rem;
-            margin-top: 3rem;
             text-align: center;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255, 255, 255, 0.6);
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .hero-content h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-content p {
-                font-size: 1.1rem;
-            }
-
-            .feature-card {
-                padding: 2rem 1.5rem;
-            }
-
             .navbar-nav {
                 text-align: center;
                 padding-top: 1rem;
@@ -299,6 +332,54 @@
             .nav-link {
                 margin: 0.25rem 0;
             }
+
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-links {
+                justify-content: center;
+            }
+
+            body {
+                padding-top: 70px;
+            }
+        }
+
+        /* Alert Improvements */
+        .alert {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            color: #3730a3;
+            border-left: 4px solid var(--primary-blue);
         }
     </style>
 </head>
@@ -308,7 +389,7 @@
       {% for category, message in messages %}
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                showAlert("{{ message }}", "{{ 'success' if category == 'success' else 'danger' if category == 'error' else 'warning' }}");
+                showAlert("{{ message }}", "{{ 'success' if category == 'success' else 'danger' if category == 'error' else 'warning' if category == 'warning' else 'info' }}");
             });
         </script>
       {% endfor %}
@@ -317,11 +398,11 @@
 
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg fixed-top">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
                 <div class="brand-icon">
-                    <i class="bi bi-heart-fill"></i>
+                    <i class="bi bi-shield-fill-check"></i>
                 </div>
                 Proteção Animal
             </a>
@@ -335,59 +416,48 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link active" href="{{ url_for('index') }}">
-                            <i class="bi bi-house-fill me-1"></i>Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#denuncias">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Denúncias
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#ongs">
-                            <i class="bi bi-people-fill me-1"></i>ONGs
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#sobre">
-                            <i class="bi bi-info-circle-fill me-1"></i>Sobre
+                            <i class="bi bi-house-fill"></i>Home
                         </a>
                     </li>
                 </ul>
                 
                 <ul class="navbar-nav ms-auto">
-                    {% if session.get('ong_logged') %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('ong_profile') }}">
-                                <i class="bi bi-person-circle me-1"></i>Perfil
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('ong_ongoing', id=session.get('ong_id')) }}">
-                                <i class="bi bi-clock-fill me-1"></i>Ações em Andamento
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('ong_events', id=session.get('ong_id')) }}">
-                                <i class="bi bi-clipboard-heart-fill me-1"></i>Eventos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn-outline-light" href="{{ url_for('logout') }}">
-                                <i class="bi bi-box-arrow-right me-1"></i>Sair
-                            </a>
-                        </li>   
+                    {% if session.get('logged') %}
+                        <div class="user-nav d-flex">
+                            <li class="nav-item">
+                                <a class="nav-link profile-link" href="{{ url_for('user') }}">
+                                    <i class="bi bi-person-circle"></i>Perfil
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('user_reports') }}">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>Minhas Denúncias
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('user_rescues') }}">
+                                    <i class="bi bi-heart-pulse-fill"></i>Meus Resgates
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link logout-link" href="{{ url_for('logout') }}">
+                                    <i class="bi bi-box-arrow-right"></i>Sair
+                                </a>
+                            </li>
+                        </div>
                     {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link btn-outline-light" href="{{ url_for('login') }}">
-                                <i class="bi bi-box-arrow-in-right me-1"></i>Entrar
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn-primary" href="{{ url_for('register') }}">
-                                <i class="bi bi-person-plus-fill me-1"></i>Criar Conta
-                            </a>
-                        </li>
+                        <div class="guest-nav d-flex">
+                            <li class="nav-item">
+                                <a class="nav-link login-link" href="{{ url_for('login') }}">
+                                    <i class="bi bi-box-arrow-in-right"></i>Login
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link ong-login-link" href="{{ url_for('ong_login') }}">
+                                    <i class="bi bi-building"></i>Login ONG
+                                </a>
+                            </li>
+                        </div>
                     {% endif %}
                 </ul>
             </div>
@@ -396,84 +466,31 @@
 
     <!-- Main Content -->
     <main>
-        {% block ong_conteudo %}
-        <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="container">
+        {% block conteudo %}
+        <!-- Default content for pages that extend this template -->
+        <div class="container">
+            <div class="page-header">
                 <div class="row align-items-center">
-                    <div class="col-lg-6">
-                        <div class="hero-content">
-                            <h1>Juntos pela Proteção Animal</h1>
-                            <p>Conectamos pessoas que se importam com ONGs dedicadas ao bem-estar animal. 
-                               Denuncie maus-tratos, solicite resgates e faça a diferença na vida dos animais.</p>
-                            <div class="d-flex gap-3 flex-wrap">
-                                <a href="#denuncias" class="btn btn-light btn-lg px-4">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Fazer Denúncia
-                                </a>
-                                <a href="#ongs" class="btn btn-outline-light btn-lg px-4">
-                                    <i class="bi bi-people-fill me-2"></i>Conhecer ONGs
-                                </a>
-                            </div>
-                        </div>
+                    <div class="col">
+                        <h1>{% block page_title %}Bem-vindo{% endblock %}</h1>
+                        <p>{% block page_description %}Sua página inicial para proteção animal{% endblock %}</p>
                     </div>
-                    <div class="col-lg-6 text-center">
-                        <div style="background: rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; backdrop-filter: blur(10px);">
-                            <i class="bi bi-heart-fill" style="font-size: 8rem; color: rgba(255,255,255,0.8);"></i>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="content-card">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-heart-fill text-primary mb-3" style="font-size: 4rem;"></i>
+                            <h3>Conteúdo da página aqui</h3>
+                            <p class="text-muted">Este é o conteúdo padrão. Substitua usando {% raw %}{% block conteudo %}{% endraw %}</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <!-- Cards Section -->
-        <section class="cards-section" id="services">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Como Podemos Ajudar</h2>
-                    <p>Oferecemos uma plataforma completa para conectar pessoas preocupadas com o bem-estar animal 
-                       às organizações especializadas em proteção e resgate.</p>
-                </div>
-                
-                <div class="row g-4">
-                    <div class="col-lg-4 col-md-6">
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="bi bi-exclamation-triangle-fill"></i>
-                            </div>
-                            <h3>Denúncias</h3>
-                            <p>Reporte casos de maus-tratos, abandono ou situações de risco para animais. 
-                               Sua denúncia pode salvar vidas e garantir que os responsáveis sejam punidos.</p>
-                            <a href="#" class="btn-feature">Fazer Denúncia</a>
-                        </div>
-                    </div>
-                    
-                    <div class="col-lg-4 col-md-6">
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="bi bi-heart-pulse-fill"></i>
-                            </div>
-                            <h3>Resgates</h3>
-                            <p>Solicite ajuda para animais em situação de emergência. Conectamos você com ONGs 
-                               especializadas em resgate e cuidados veterinários de urgência.</p>
-                            <a href="#" class="btn-feature">Solicitar Resgate</a>
-                        </div>
-                    </div>
-                    
-                    <div class="col-lg-4 col-md-6">
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="bi bi-people-fill"></i>
-                            </div>
-                            <h3>ONGs Parceiras</h3>
-                            <p>Conheça as organizações que trabalham incansavelmente pela proteção animal. 
-                               Encontre ONGs próximas e saiba como apoiar o trabalho delas.</p>
-                            <a href="#" class="btn-feature">Conhecer ONGs</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        {% endblock ong_conteudo %}
+        </div>
+        {% endblock conteudo %}
     </main>
 
     <!-- Footer -->
@@ -494,7 +511,10 @@
             alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
             alertDiv.style.cssText = 'top: 100px; right: 20px; z-index: 9999; max-width: 400px;';
             alertDiv.innerHTML = `
-                ${message}
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'exclamation-triangle-fill' : type === 'warning' ? 'exclamation-circle-fill' : 'info-circle-fill'} me-2"></i>
+                    <span>${message}</span>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             
@@ -506,6 +526,11 @@
                     alertDiv.remove();
                 }
             }, 5000);
+        }
+
+        // Função para atualizar contadores (se necessário)
+        function updateCounters() {
+            // Implementar conforme necessário
         }
     </script>
 </body>

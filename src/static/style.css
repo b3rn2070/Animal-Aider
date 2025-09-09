@@ -15,7 +15,7 @@ body {
 }
 
 .navbar {
-    background-color: #003366 !important;
+    background-color: #f87c09 !important;
     padding: 0.75rem 1rem;
 }
 
@@ -27,7 +27,7 @@ body {
 
 .navbar .nav-link:hover {
     font-weight: bold;
-    color: #ffcc00 !important;
+    color: #ff7b00 !important;
 }
 
 
@@ -489,13 +489,13 @@ input:focus, textarea:focus, select:focus {
 
     .no-ongs {
         text-align: center;
-        background: #e0f2fe;
-        color: #0277bd;
+        background: #feede0;
+        color: #bd5102;
         padding: 30px;
         border-radius: 12px;
         max-width: 500px;
         margin: 0 auto;
-        border-left: 4px solid #0288d1;
+        border-left: 4px solid #d17302;
     }
 
     /* Modal Styles */
