@@ -21,21 +21,29 @@
         {% else %}
             <div class="row g-4">
                 {% for event in events %}
-                    <div class="col-md-6 col-lg-4">
-                        <div class="card h-100 shadow-sm border-0">
-                            {% if event.event_photo %}
-                                <img src="{{ url_for('static', filename='uploads/' + event.event_photo) }}" class="card-img-top" alt="Imagem do Evento" style="height: 200px; object-fit: cover;">
-                            {% endif %}
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">{{ event.event_title }}</h5>
-                                <p class="card-text text-muted">{{ event.event_description[:100] }}{% if event.event_description|length > 100 %}...{% endif %}</p>
-                                <ul class="list-unstyled mt-auto text-muted small">
-                                    <li><i class="bi bi-calendar-event me-1"></i> {{ event.event_date.strftime('%d/%m/%Y') }}</li>
-                                    <li><i class="bi bi-geo-alt-fill me-1"></i> {{ event.event_location }}{% if event.event_city %}, {{ event.event_city }}{% endif %}</li>
-                                </ul>
-                            </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        {% if event.event_photo %}
+                            <img src="{{ url_for('static', filename='uploads/' + event.event_photo) }}" class="card-img-top" alt="Imagem do Evento" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ event.event_title }}</h5>
+                            <p class="card-text text-muted">{{ event.event_description[:100] }}{% if event.event_description|length > 100 %}...{% endif %}</p>
+                            <ul class="list-unstyled mt-auto text-muted small">
+                                <li><i class="bi bi-calendar-event me-1"></i> {{ event.event_date.strftime('%d/%m/%Y') }}</li>
+                                <li><i class="bi bi-geo-alt-fill me-1"></i> {{ event.event_location }}{% if event.event_city %}, {{ event.event_city }}{% endif %}</li>
+                            </ul>
+                
+                            <!-- Botão de excluir -->
+                            <form action="{{ url_for('delete_event', event_id=event.event_id) }}" method="post" class="mt-3">
+                                <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Tem certeza que deseja excluir este evento?');">
+                                    <i class="bi bi-trash-fill me-1"></i> Excluir
+                                </button>
+                            </form>
                         </div>
                     </div>
+                </div>
+                
                 {% endfor %}
             </div>
         {% endif %}

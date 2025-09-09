@@ -1064,5 +1064,37 @@ def create_event(id):
 
     return render_template('create_event.html', cities=cities)
 
+@app.route('/delete_event/<int:event_id>', methods=['POST'])
+def delete_event(event_id):
+    if not session.get('ong_logged'):
+        flash('Você precisa estar logado como ONG.', 'error')
+        return redirect(url_for('ong_login'))
+
+    event = Events.query.get(event_id)
+
+    if not event or event.event_ong_id != session.get('ong_id'):
+        flash('Evento não encontrado ou acesso negado.', 'error')
+        return redirect(url_for('ong_events', id=session.get('ong_id')))
+
+    # Apagar a imagem se houver
+    if event.event_photo:
+        try:
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], event.event_photo)
+            if os.path.exists(photo_path):
+                os.remove(photo_path)
+        except Exception as e:
+            logging.error(f'Erro ao remover imagem do evento: {e}')
+
+    try:
+        db.session.delete(event)
+        db.session.commit()
+        flash('Evento excluído com sucesso.', 'success')
+    except Exception as e:
+        logging.error(f'Erro ao excluir evento: {e}')
+        flash('Erro ao excluir o evento.', 'error')
+
+    return redirect(url_for('ong_events', id=session.get('ong_id')))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
