@@ -1,3 +1,44 @@
 {% extends 'base_ong.html' %}
+
 {% block ong_conteudo %}
+<section class="cards-section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2 class="mb-0">Eventos Realizados</h2>
+            <a href="{{ url_for('create_event', id=session.get('ong_id')) }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Novo Evento
+            </a>
+        </div>
+
+        {% if events|length == 0 %}
+            <div class="card text-center p-5 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-calendar-x display-4 text-muted mb-3"></i>
+                    <h4 class="card-title">Nenhum evento cadastrado</h4>
+                    <p class="card-text text-muted">Você ainda não adicionou nenhum evento. Clique em "Novo Evento" para começar.</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="row g-4">
+                {% for event in events %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm border-0">
+                            {% if event.event_photo %}
+                                <img src="{{ url_for('static', filename='uploads/' + event.event_photo) }}" class="card-img-top" alt="Imagem do Evento" style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">{{ event.event_title }}</h5>
+                                <p class="card-text text-muted">{{ event.event_description[:100] }}{% if event.event_description|length > 100 %}...{% endif %}</p>
+                                <ul class="list-unstyled mt-auto text-muted small">
+                                    <li><i class="bi bi-calendar-event me-1"></i> {{ event.event_date.strftime('%d/%m/%Y') }}</li>
+                                    <li><i class="bi bi-geo-alt-fill me-1"></i> {{ event.event_location }}{% if event.event_city %}, {{ event.event_city }}{% endif %}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</section>
 {% endblock ong_conteudo %}

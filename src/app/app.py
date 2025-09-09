@@ -978,25 +978,91 @@ def finish_rescue(id):
 
     return redirect(url_for('ong_ongoing', id=ong_id))
 
-@app.route('/ong_events/<int:id>', methods=['GET', 'POST'])
-def ong_events(id):
-    if session.get('logged'):
-        flash('Você não pode acessar.', 'error')
-        return redirect(url_for('index'))
+@app.route('/ong_events/<int:id>', methods=['GET', 'POST']) 
+def ong_events(id): 
+    if session.get('logged'): 
+        flash('Você não pode acessar.', 'error') 
+        return redirect(url_for('index')) 
+    if not session.get('ong_logged'): 
+        return redirect(url_for('ong_login')) 
+    events = Events.query.filter(
+        and_(
+            Events.event_ong_id == id 
+        )).all()
+        
+    if request.method == 'GET': 
+        return render_template('ong_events.html', events=events) 
     
-    if not session.get('ong_logged'):
+    if request.method == 'POST': 
+        return render_template('ong_events.html', events=events)
+
+@app.route('/create_event/<int:id>', methods=['GET', 'POST'])
+def create_event(id):
+    if not session.get('ong_logged') or session.get('ong_id') != id:
+        flash('Acesso negado.', 'error')
         return redirect(url_for('ong_login'))
 
-    events = Events.query.filter(and_(
-        Events.event_ong_id == id
-    ))
-
-    if request.method == 'GET':
-        return render_template('ong_events.html', events=events)
-    
     if request.method == 'POST':
+        title = request.form.get('event_title')
+        description = request.form.get('event_description')
+        date_str = request.form.get('event_date')
+        location = request.form.get('event_location')
+        city = request.form.get('event_city')
+        photo = request.files.get('event_photo')
 
-        return render_template('ong_events.html', events=events)        
+        if not title or not date_str or not location:
+            flash('Título, data e localização são obrigatórios.', 'error')
+            return render_template('create_event.html', cities=cities)
+
+        try:
+            event_date = datetime.strptime(date_str, '%Y-%m-%d')
+        except ValueError:
+            flash('Data inválida. Use o formato YYYY-MM-DD.', 'error')
+            return render_template('create_event.html', cities=cities)
+
+        photo_filename = None
+
+        # Tratamento do upload da foto, seguindo seu padrão
+        if photo and photo.filename and checkExtension(photo.filename):
+            try:
+                extension = photo.filename.rsplit('.', 1)[1].lower()
+                photo_filename = f"{uuid.uuid4()}.{extension}"
+
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+            except Exception as e:
+                logging.error(f"Erro no upload da foto do evento: {e}")
+                flash('Erro ao fazer upload da imagem.', 'error')
+                return render_template('create_event.html', cities=cities)
+
+        try:
+            new_event = Events(
+                event_title=title,
+                event_description=description,
+                event_date=event_date,
+                event_location=location,
+                event_city=city,
+                event_photo=photo_filename,
+                event_ong_id=id
+            )
+            db.session.add(new_event)
+            db.session.commit()
+            
+        except Exception as e:
+            logging.error(f"Erro ao salvar evento no banco: {e}")
+            # Remove foto salva caso falhe o commit
+            if photo_filename:
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+                except Exception as ex:
+                    logging.error(f"Erro ao remover arquivo após falha no DB: {ex}")
+            flash('Erro ao registrar evento. Tente novamente.', 'error')
+            return render_template('create_event.html', cities=cities)
+
+        flash('Evento criado com sucesso!', 'success')
+        return redirect(url_for('ong_events', id=id, cities=cities))
+
+    return render_template('create_event.html', cities=cities)
 
 if __name__ == "__main__":
     app.run(debug=True)

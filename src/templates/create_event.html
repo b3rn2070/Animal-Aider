@@ -1,0 +1,74 @@
+{% extends 'base_ong.html' %}
+{% block ong_conteudo %}
+
+<div class="container my-5">
+  <h1 class="mb-4 text-center text-primary">Criar Novo Evento</h1>
+
+  <form action="{{ url_for('create_event', id=session.get('ong_id')) }}" method="post" enctype="multipart/form-data" class="needs-validation form-control" novalidate>
+    <div class="row g-3">
+
+      <div class="col-12">
+        <label for="event_title" class="form-label fw-semibold">Título do Evento:</label>
+        <input type="text" id="event_title" name="event_title" class="form-control" required>
+        <div class="invalid-feedback">Por favor, insira o título do evento.</div>
+      </div>
+
+      <div class="col-12">
+        <label for="event_description" class="form-label fw-semibold">Descrição:</label>
+        <textarea id="event_description" name="event_description" rows="4" class="form-control"></textarea>
+      </div>
+
+      <div class="col-md-6">
+        <label for="event_date" class="form-label fw-semibold">Data do Evento:</label>
+        <input type="date" id="event_date" name="event_date" class="form-control" required>
+        <div class="invalid-feedback">Informe uma data válida.</div>
+      </div>
+
+      <div class="col-md-6">
+        <label for="event_city" class="form-label fw-semibold">Cidade:</label>
+        <select id="event_city" name="event_city" class="form-select" required>
+          <option value="" selected disabled>Selecione uma cidade</option>
+          {% for city in cities %}
+          <option value="{{ city }}">{{ city }}</option>
+          {% endfor %}
+        </select>
+        <div class="invalid-feedback">Selecione uma cidade.</div>
+      </div>
+
+      <div class="col-12">
+        <label for="event_location" class="form-label fw-semibold">Local do Evento:</label>
+        <input type="text" id="event_location" name="event_location" class="form-control" required placeholder="Rua, número, bairro...">
+        <div class="invalid-feedback">Informe o local do evento.</div>
+      </div>
+
+      <div class="col-12">
+        <label for="event_photo" class="form-label fw-semibold">Foto do Evento (opcional):</label>
+        <input type="file" id="event_photo" name="event_photo" class="form-control" accept=".jpg,.jpeg,.png,.gif">
+      </div>
+
+      <div class="col-12 text-center mt-4">
+        <button type="submit" class="btn btn-success btn-lg px-5">Criar Evento</button>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<script>
+// Bootstrap validation example (you can adapt as needed)
+(() => {
+  'use strict'
+  const forms = document.querySelectorAll('.needs-validation')
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
+
+{% endblock ong_conteudo %}
