@@ -740,7 +740,7 @@ def rescue():
     # Processar POST
     try:
         # Validação de campos obrigatórios básicos
-        required_fields = ['desc', 'city']
+        required_fields = ['desc', 'city', 'author']
         missing_fields = [field for field in required_fields 
                          if not request.form.get(field, '').strip()]
         
@@ -893,13 +893,15 @@ def ong_ongoing(id):
     
     rescues = Rescue.query.filter(
         and_(
-            Rescue.resc_ong_id == id
+            Rescue.resc_ong_id == id,
+            Rescue.resc_status == 'andamento'
         )
     )
     
     reports = Report.query.filter(
         and_(
-            Report.rep_ong_id == id
+            Report.rep_ong_id == id,
+            Report.rep_status == 'andamento'
         )
     )
 
@@ -928,14 +930,21 @@ def finish_report(id):
     ).first()
 
     if report:
+        ong = Ong.query.get(ong_id)
+        if ong:
+            ong.ong_reportsResolved += 1
+
         report.rep_status = 'finalizado'
         db.session.commit()
         message = 'Denúncia finalizada com sucesso!'
+
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({'success': True, 'message': message})
         flash(message, 'success')
+
     else:
         message = 'Denúncia não encontrada, não pertence a esta ONG ou não pode ser finalizada.'
+        
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({'success': False, 'message': message})
         flash(message, 'danger')
@@ -965,6 +974,7 @@ def finish_rescue(id):
 
     if rescue:
         rescue.resc_status = 'finalizado'
+        Ong.ong_rescuesResolved += 1
         db.session.commit()
         message = 'Resgate finalizado com sucesso!'
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
