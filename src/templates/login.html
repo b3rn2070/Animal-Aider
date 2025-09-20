@@ -3,9 +3,9 @@
 <div class="container mt-5" style="max-width: 450px;">
     <div class="card shadow-lg border-0 rounded-4">
         <div class="card-body p-4">
-            <h2 class="text-center mb-4">Login<color: ></color:></h2>
+            <h2 class="mb-4 text-center text-primary">Login</h2>
 
-            <form action="{{ url_for('login') }}" method="POST">
+            <form action="{{ url_for('login') }}" method="POST" class="needs-validation" novalidate>
                 <div class="mb-3">
                     <label for="email" class="form-label fw-bold">Email</label>
                     <input type="text" id="email" name="email" class="form-control" placeholder="Digite seu email" required />
@@ -16,10 +16,10 @@
                     <input type="password" id="password" name="password" class="form-control" placeholder="Digite sua senha" required />
                 </div>
 
-                <button class="btn btn-success w-100">Entrar</button>
+                <button class="btn btn-success w-100 mt-4">Entrar</button>
             </form>
 
-            <hr class="my-4">
+            <hr class="my-3">
 
             <p class="text-center mb-1">
                 Não tem uma conta?

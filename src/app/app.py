@@ -605,9 +605,9 @@ def ong_login():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        if request.form.get('email') and request.form.get('pass'):
+        if request.form.get('email') and request.form.get('password'):
             email = request.form.get('email')
-            password = request.form.get('pass')
+            password = request.form.get('password')
 
             if checkOng(email, password):
                 ong = getOng(email)

@@ -8,3 +8,4 @@ db.txt
 *.jpeg
 *.jfif
 !static/uploads/default_proflie.jpg
+instance
