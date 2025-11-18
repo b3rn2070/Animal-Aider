@@ -29,7 +29,6 @@ class User(db.Model):
             if hasattr(self, field) and new_value is not None:
                 current_value = getattr(self, field)
                 
-                # Só atualiza se o valor for diferente
                 if current_value != new_value and str(new_value).strip() != '':
                     setattr(self, field, new_value)
                     updated_fields[field] = new_value
@@ -46,7 +45,6 @@ class User(db.Model):
                 'user_city', 'user_address', 'user_num', 'user_profile_photo'
             ]
         
-        # Filtra apenas campos permitidos e não vazios
         filtered_data = {k: v for k, v in data_dict.items() 
                         if k in allowed_fields and v is not None and str(v).strip() != ''}
         
@@ -60,21 +58,21 @@ class User(db.Model):
 
 class Report(db.Model):
     __tablename__ = 'tbReport'
-    __table_args__ = {'extend_existing': True}  # Permite redefinir tabela existente
+    __table_args__ = {'extend_existing': True} 
     
     rep_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    rep_title = db.Column(db.String(255), nullable=False, index=True)  # Índice para busca
-    rep_desc = db.Column(db.Text)  # Text para descrições longas
-    rep_city = db.Column(db.String(100), index=True)  # Índice para filtros por cidade
+    rep_title = db.Column(db.String(255), nullable=False, index=True)  
+    rep_desc = db.Column(db.Text) 
+    rep_city = db.Column(db.String(100), index=True) 
     rep_address = db.Column(db.String(255))
-    rep_date = db.Column(db.DateTime, nullable=False, index=True)  # Índice para ordenação
+    rep_date = db.Column(db.DateTime, nullable=False, index=True)  
     rep_phone = db.Column(db.String(20))
     rep_email = db.Column(db.String(100))
     rep_status = db.Column(db.String(20), default='pendente', nullable=False, index=True)
     rep_photo = db.Column(db.String(255))
     rep_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
     rep_ong_id = db.Column(db.Integer, db.ForeignKey('tbOngs.ong_id'), index=True, default=None)
-    rep_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
+    rep_created_at = db.Column(db.DateTime, default=dt.utcnow) 
     
     def __repr__(self):
         return f'<Report {self.rep_id}: {self.rep_title}>'
@@ -88,7 +86,7 @@ class Events(db.Model):
     event_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     event_location = db.Column(db.String(200), nullable=False)
     event_city = db.Column(db.String(100), nullable=True)
-    event_photo = db.Column(db.String, nullable=True)  # Caminho para imagem do evento
+    event_photo = db.Column(db.String, nullable=True)
     event_created_at = db.Column(db.DateTime, default=datetime.utcnow)
     event_ong_id = db.Column(db.Integer, db.ForeignKey('tbOngs.ong_id'), nullable=False)
 
@@ -123,7 +121,6 @@ class Ong(db.Model):
             if hasattr(self, field) and new_value is not None:
                 current_value = getattr(self, field)
                 
-                # Só atualiza se o valor for diferente
                 if current_value != new_value and str(new_value).strip() != '':
                     setattr(self, field, new_value)
                     updated_fields[field] = new_value
@@ -141,7 +138,6 @@ class Ong(db.Model):
                 'ong_reportsResolved', 'ong_rescuesResolved', 'ong_profile_photo'
             ]
         
-        # Filtra apenas campos permitidos e não vazios
         filtered_data = {k: v for k, v in data_dict.items() 
                         if k in allowed_fields and v is not None and str(v).strip() != ''}
         
@@ -155,27 +151,26 @@ class Ong(db.Model):
 
 class Rescue(db.Model):
     __tablename__ = 'tbRescues'
-    __table_args__ = {'extend_existing': True}  # Permite redefinir tabela existente
+    __table_args__ = {'extend_existing': True} 
     
     resc_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    resc_date = db.Column(db.DateTime, default=dt.utcnow, index=True)  # Índice para ordenação
-    resc_desc = db.Column(db.Text, nullable=False)  # Text para descrições longas
+    resc_date = db.Column(db.DateTime, default=dt.utcnow, index=True)  
+    resc_desc = db.Column(db.Text, nullable=False) 
     resc_photo = db.Column(db.String(255))
     resc_author = db.Column(db.String(100), nullable=False)
     resc_phone = db.Column(db.String(20), nullable=False)
     resc_cep = db.Column(db.String(10))
-    resc_city = db.Column(db.String(100), nullable=False, index=True)  # Índice para filtros
+    resc_city = db.Column(db.String(100), nullable=False, index=True) 
     resc_addr = db.Column(db.String(255))
     resc_num = db.Column(db.String(20))
     resc_status = db.Column(db.String(20), default='pendente', nullable=False, index=True)
     resc_user_id = db.Column(db.Integer, db.ForeignKey('tbUsers.user_id'), index=True)
     resc_ong_id = db.Column(db.Integer, db.ForeignKey('tbOngs.ong_id'), index=True, default=None)
-    resc_created_at = db.Column(db.DateTime, default=dt.utcnow)  # Timestamp de criação
+    resc_created_at = db.Column(db.DateTime, default=dt.utcnow)  
     
     def __repr__(self):
         return f'<Rescue {self.resc_id}: {self.resc_author} - {self.resc_city}>'
 
-# Funções de CRUD
 def saveUser(name, email, password, phone, cep, city, addr, num, photo=None):
     if User.query.filter_by(user_email=email).first():
         return False
@@ -300,13 +295,11 @@ def checkOng(email, password):
 
 def saveReport(title, desc, city, date, phone, photo=None, email=None, addr=None, userId=None):
     try:
-        # Validação adicional no nível de dados (photo não é obrigatório aqui)
         if not all([title, desc, city, date, phone]):
             logging.error("Campos obrigatórios ausentes")
             print(f"Campos: title={title}, desc={desc}, city={city}, date={date}, phone={phone}")
             return False
         
-        # Conversão de userId se necessário
         if userId:
             try:
                 userId = int(userId)
@@ -314,14 +307,14 @@ def saveReport(title, desc, city, date, phone, photo=None, email=None, addr=None
                 userId = None
         
         report = Report(
-            rep_title=title[:255],  # Limita tamanho
-            rep_desc=desc[:1000],   # Limita tamanho
-            rep_city=city[:100],    # Limita tamanho
+            rep_title=title[:255], 
+            rep_desc=desc[:1000],   
+            rep_city=city[:100],   
             rep_address=addr[:255] if addr else None,
             rep_date=dt.strptime(date, '%Y-%m-%d'),
-            rep_phone=phone[:20],   # Limita tamanho
+            rep_phone=phone[:20],  
             rep_email=email[:100] if email else None,
-            rep_photo=photo,  # Pode ser None
+            rep_photo=photo,  
             rep_user_id=userId if userId else None
         )
         
@@ -342,13 +335,11 @@ def saveReport(title, desc, city, date, phone, photo=None, email=None, addr=None
 
 def saveRescue(desc, author, phone, cep, city, addr=None, num=None, photo=None, userId=None):
     try:
-        # Validação adicional no nível de dados
         if not all([desc, author, phone, city]):
             logging.error("Campos obrigatórios ausentes no resgate")
             print(f"Campos: desc={desc}, author={author}, phone={phone}, city={city}")
             return False
         
-        # Conversão de userId se necessário
         if userId:
             try:
                 userId = int(userId)
@@ -356,14 +347,14 @@ def saveRescue(desc, author, phone, cep, city, addr=None, num=None, photo=None, 
                 userId = None
         
         rescue = Rescue(
-            resc_desc=desc[:1000],  # Limita tamanho
-            resc_author=author[:100],  # Limita tamanho
-            resc_phone=phone[:20],  # Limita tamanho
-            resc_cep=cep[:10] if cep else None,  # Limita tamanho
-            resc_city=city[:100],  # Limita tamanho
-            resc_addr=addr[:255] if addr else None,  # Limita tamanho
-            resc_num=num[:20] if num else None,  # Limita tamanho
-            resc_photo=photo,  # Pode ser None
+            resc_desc=desc[:1000], 
+            resc_author=author[:100],  
+            resc_phone=phone[:20],  
+            resc_cep=cep[:10] if cep else None,  
+            resc_city=city[:100], 
+            resc_addr=addr[:255] if addr else None,  
+            resc_num=num[:20] if num else None,  
+            resc_photo=photo, 
             resc_user_id=userId if userId else None
         )
         

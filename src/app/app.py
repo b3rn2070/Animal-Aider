@@ -19,16 +19,13 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 random_key = secrets.token_hex(16)
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
-# Configuração do banco de dados
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///animal_aider.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = random_key
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Inicializa o SQLAlchemy com o app Flask
 db.init_app(app)
 
-# Cria as tabelas no banco de dados
 with app.app_context():
     db.create_all()
 
@@ -56,7 +53,7 @@ def index():
                 Rescue.resc_city == city,
                 Rescue.resc_status == 'pendente'
             )
-        ).all()  # ← Adicione .all() aqui
+        ).all()  
 
         return render_template("ong_index.html", reports=reports, rescues=rescues)
 
@@ -76,7 +73,6 @@ def accept_report(report_id):
     try:
         report = Report.query.get_or_404(report_id)
         
-        # Verificar se a denúncia é da mesma cidade da ONG
         if report.rep_city != session.get('ong_city'):
             return jsonify({'success': False, 'message': 'Denúncia não pertence à sua cidade'}), 403
         
@@ -98,7 +94,6 @@ def reject_report(report_id):
     try:
         report = Report.query.get_or_404(report_id)
         
-        # Verificar se a denúncia é da mesma cidade da ONG
         if report.rep_city != session.get('ong_city'):
             return jsonify({'success': False, 'message': 'Denúncia não pertence à sua cidade'}), 403
         
@@ -119,7 +114,6 @@ def accept_rescue(rescue_id):
     try:
         rescue = Rescue.query.get_or_404(rescue_id)
         
-        # Verificar se o resgate é da mesma cidade da ONG
         if rescue.resc_city != session.get('ong_city'):
             return jsonify({'success': False, 'message': 'Resgate não pertence à sua cidade'}), 403
         
@@ -141,7 +135,6 @@ def reject_rescue(rescue_id):
     try:
         rescue = Rescue.query.get_or_404(rescue_id)
         
-        # Verificar se o resgate é da mesma cidade da ONG
         if rescue.resc_city != session.get('ong_city'):
             return jsonify({'success': False, 'message': 'Resgate não pertence à sua cidade'}), 403
         
@@ -188,7 +181,7 @@ def delReport(id):
         
         flash(message, 'danger')
 
-    return redirect(url_for('user_reports'))  # ou a rota apropriada para onde redirecionar
+    return redirect(url_for('user_reports'))  
 
 @app.route('/delRescue/<int:id>', methods=['POST'])
 def delRescue(id):
@@ -202,8 +195,8 @@ def delRescue(id):
 
     rescue = Rescue.query.filter(
         and_(
-            Rescue.resc_id == id,  # Note: mudei de rep_id para resc_id
-            Rescue.resc_user_id == user_id  # Note: mudei de rep_user_id para resc_user_id
+            Rescue.resc_id == id, 
+            Rescue.resc_user_id == user_id  
         )
     ).first()
 
@@ -263,7 +256,7 @@ def logout():
     flash('Logout realizado com sucesso!', 'success')
     return redirect(url_for('index'))
 
-@app.route("/register", methods=['POST', 'GET']) #colocar forma de enviar a foto depois
+@app.route("/register", methods=['POST', 'GET'])
 def register():
     if session.get('logged') or session.get('ong_logged'):
         flash('Você já está logado!', 'info')
@@ -289,9 +282,8 @@ def register():
                 new_filename = 'default_profile.jpg'
             elif photo and checkExtension(photo.filename):
 
-                extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
-                new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
-                # Salva o arquivo com o novo nome
+                extension = photo.filename.rsplit('.', 1)[1].lower()  
+                new_filename = str(uuid.uuid4()) + '.' + extension  
                 try:
                     photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
                 except Exception as e:
@@ -309,16 +301,13 @@ def register():
 
 @app.route("/report", methods=['POST', 'GET'])
 def report():
-    # Cache das datas
     hoje = dt.today()
     min_data = hoje - timedelta(days=2)
     max_data = hoje
     
-    # Formatar datas para o HTML
     max_data_str = max_data.strftime('%Y-%m-%d')
     min_data_str = min_data.strftime('%Y-%m-%d')
     
-    # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
     
@@ -328,21 +317,16 @@ def report():
                              max_data=max_data_str, 
                              cities=cities)
     
-    # Processar POST
     try:
-        # Validação de campos obrigatórios básicos
         required_fields = ['title', 'desc', 'date', 'city']
         missing_fields = [field for field in required_fields 
                          if not request.form.get(field, '').strip()]
         
-        # Verificar se usuário está logado para validar telefone
         user_logged = session.get('logged')
         if not user_logged:
-            # Para usuários não logados, telefone é obrigatório
             if not request.form.get('phone', '').strip():
                 missing_fields.append('phone')
         
-        # Verificar se foto é obrigatória (conforme formulário)
         photo = request.files['photo']
         if not photo or not photo.filename:
             flash('A foto do avistamento é obrigatória.', 'error')
@@ -358,7 +342,6 @@ def report():
                                  max_data=max_data_str, 
                                  cities=cities)
         
-        # Extração e limpeza dos dados
         data = {
             'title': request.form.get('title').strip(),
             'desc': request.form.get('desc').strip(),
@@ -367,26 +350,21 @@ def report():
             'addr': request.form.get('addr', '').strip() or None,
         }
         
-        # Dados específicos por tipo de usuário
         if user_logged:
-            # Usuário logado - dados vêm da sessão
             data['email'] = session.get('user_email')
             data['phone'] = session.get('user_phone') 
             data['userId'] = session.get('user_id')
         else:
-            # Usuário anônimo - dados vêm do formulário
             data['email'] = request.form.get('email', '').strip() or None
             data['phone'] = request.form.get('phone', '').strip()
             data['userId'] = None
         
-        # Processamento de foto (obrigatória)
         photo_filename = None
         if photo and checkExtension(photo.filename):
             try:
                 extension = photo.filename.rsplit('.', 1)[1].lower()
                 photo_filename = str(uuid.uuid4()) + '.' + extension
                 
-                # Cria diretório se não existir
                 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                 
                 photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
@@ -404,7 +382,6 @@ def report():
                                  max_data=max_data_str, 
                                  cities=cities)
         
-        # Salvar no banco
         if saveReport(
             title=data['title'],
             desc=data['desc'],
@@ -422,7 +399,6 @@ def report():
                 flash('Denúncia anônima enviada com sucesso!', 'success')
             return redirect(url_for('index'))
         else:
-            # Remove arquivo se salvamento falhou
             if photo_filename:
                 try:
                     os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
@@ -439,7 +415,6 @@ def report():
                          max_data=max_data_str, 
                          cities=cities)
 
-#lembrar de tirar isso depois
 @app.route('/ver_dados')
 def ver_dados():
     dados = []
@@ -455,7 +430,6 @@ def user():
     if session.get('ong_logged'):
         return redirect(url_for('index'))
 
-    # Busca o usuário pelo SQLAlchemy (mais eficiente)
     user = User.query.filter_by(user_email=session.get('user_email')).first()
     if not user:
         flash('Usuário não encontrado.', 'error')
@@ -465,33 +439,28 @@ def user():
 
     if request.method == 'POST':
         try:
-            # Coleta os dados do formulário (mapeando os nomes corretos)
             form_data = {
                 'user_name': request.form.get('name'),
                 'user_city': request.form.get('city'),
                 'user_email': request.form.get('email'),
                 'user_phone': request.form.get('phone'),
                 'user_cep': request.form.get('cep'),
-                'user_address': request.form.get('addr'),  # 'addr' no form -> 'user_address' no banco
+                'user_address': request.form.get('addr'),  
                 'user_num': request.form.get('num')
             }
             
-            # Remove valores vazios
             form_data = {k: v for k, v in form_data.items() if v and v.strip()}
             
-            # Verifica se há dados para atualizar
             if not form_data and 'photo' not in request.files:
                 flash('Nenhum dado foi fornecido para atualização.', 'warning')
                 return redirect(url_for('user'))
             
-            # Validação de email único (só se email foi alterado)
             if 'user_email' in form_data and form_data['user_email'] != user.user_email:
                 existing_user = User.query.filter_by(user_email=form_data['user_email']).first()
                 if existing_user:
                     flash('Este email já está sendo usado por outro usuário.', 'error')
                     return redirect(url_for('user'))
             
-            # Processamento da foto
             new_filename = None
             if 'photo' in request.files:
                 photo = request.files['photo']
@@ -499,31 +468,27 @@ def user():
                     extension = photo.filename.rsplit('.', 1)[1].lower()
                     new_filename = str(uuid.uuid4()) + '.' + extension
                     
-                    # Salva a nova foto
                     photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
                     form_data['user_profile_photo'] = new_filename
                     
-                    # Remove a foto antiga se existir
                     if user.user_profile_photo:
                         old_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], user.user_profile_photo)
                         if os.path.exists(old_photo_path):
                             try:
                                 os.remove(old_photo_path)
                             except:
-                                pass  # Se não conseguir deletar, continua
+                                pass  
                     
-                elif photo and photo.filename:  # Se tem arquivo mas extensão inválida
+                elif photo and photo.filename: 
                     flash('Extensão de arquivo não suportada.', 'error')
                     return redirect(url_for('user'))
             
-            # Atualiza o usuário com os dados coletados
             result = updateUser(user_id, **form_data)
             
             if result['success']:
                 if result.get('updated_fields'):
                     flash(f'Dados atualizados com sucesso! {result["message"]}', 'success')
                     
-                    # Atualiza a sessão se necessário
                     updated_fields = result['updated_fields']
                     if 'user_email' in updated_fields:
                         session['user_email'] = updated_fields['user_email']
@@ -572,10 +537,9 @@ def ong_register():
         if not photo:
             new_filename = 'default_profile.jpg'
         elif photo and checkExtension(photo.filename):
-            extension = photo.filename.rsplit('.', 1)[1].lower()  # Obtém a extensão do arquivo
-            new_filename = str(uuid.uuid4()) + '.' + extension  # Gera um UUID aleatório para o nome do arquivo
+            extension = photo.filename.rsplit('.', 1)[1].lower()  
+            new_filename = str(uuid.uuid4()) + '.' + extension  
 
-            # Salva o arquivo com o novo nome
             photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
 
         if saveOng(name, phone, email, password, cpf, cep, city, hood, addr, num, new_filename, desc):
@@ -633,7 +597,6 @@ def ong_profile():
         flash('Você precisa estar logado como ONG para acessar esta página.', 'error')
         return redirect(url_for('ong_login'))
 
-    # Busca a ONG pelo SQLAlchemy (mais eficiente)
     ong = Ong.query.filter_by(ong_email=session.get('ong_email')).first()
     if not ong:
         flash('ONG não encontrada.', 'error')
@@ -643,7 +606,6 @@ def ong_profile():
 
     if request.method == 'POST':
         try:
-            # Coleta os dados do formulário (mapeando os nomes corretos)
             form_data = {
                 'ong_name': request.form.get('name'),
                 'ong_phone': request.form.get('phone'),
@@ -652,27 +614,23 @@ def ong_profile():
                 'ong_cep': request.form.get('cep'),
                 'ong_city': request.form.get('city'),
                 'ong_hood': request.form.get('hood'),
-                'ong_address': request.form.get('addr'),  # 'addr' no form -> 'ong_address' no banco
+                'ong_address': request.form.get('addr'),  
                 'ong_num': request.form.get('num'),
                 'ong_desc': request.form.get('desc')
             }
             
-            # Remove valores vazios
             form_data = {k: v for k, v in form_data.items() if v and v.strip()}
             
-            # Verifica se há dados para atualizar
             if not form_data and 'photo' not in request.files:
                 flash('Nenhum dado foi fornecido para atualização.', 'warning')
                 return redirect(url_for('ong_profile'))
             
-            # Validação de email único (só se email foi alterado)
             if 'ong_email' in form_data and form_data['ong_email'] != ong.ong_email:
                 existing_ong = Ong.query.filter_by(ong_email=form_data['ong_email']).first()
                 if existing_ong:
                     flash('Este email já está sendo usado por outra ONG.', 'error')
                     return redirect(url_for('ong_profile'))
             
-            # Processamento da foto
             new_filename = None
             if 'photo' in request.files:
                 photo = request.files['photo']
@@ -680,34 +638,30 @@ def ong_profile():
                     extension = photo.filename.rsplit('.', 1)[1].lower()
                     new_filename = str(uuid.uuid4()) + '.' + extension
                     
-                    # Salva a nova foto
                     photo.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
                     form_data['ong_profile_photo'] = new_filename
                     
-                    # Remove a foto antiga se existir
                     if ong.ong_profile_photo:
                         old_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], ong.ong_profile_photo)
                         if os.path.exists(old_photo_path):
                             try:
                                 os.remove(old_photo_path)
                             except:
-                                pass  # Se não conseguir deletar, continua
+                                pass  
                     
-                elif photo and photo.filename:  # Se tem arquivo mas extensão inválida
+                elif photo and photo.filename:  
                     flash('Extensão de arquivo não suportada.', 'error')
                     return redirect(url_for('ong_profile'))
             
-            # Atualiza a ONG usando o método safe_update
+           
             result = ong.safe_update(form_data)
             
             if result['success']:
-                # Salva no banco
                 db.session.commit()
                 
                 if result.get('updated_fields'):
                     flash(f'Dados atualizados com sucesso! {result["total_changes"]} campo(s) alterado(s).', 'success')
                     
-                    # Atualiza a sessão se necessário
                     updated_fields = result['updated_fields']
                     if 'ong_email' in updated_fields:
                         session['ong_email'] = updated_fields['ong_email']
@@ -721,7 +675,7 @@ def ong_profile():
                 flash('Nenhuma alteração foi detectada.', 'info')
                 
         except Exception as e:
-            db.session.rollback()  # Reverte mudanças em caso de erro
+            db.session.rollback()  
             flash(f'Erro interno: {str(e)}', 'error')
             
         return redirect(url_for('ong_profile'))
@@ -730,24 +684,19 @@ def ong_profile():
 
 @app.route('/rescue', methods=['GET', 'POST'])
 def rescue():
-    # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
     
     if request.method == 'GET':
         return render_template('rescue.html', cities=cities)
     
-    # Processar POST
     try:
-        # Validação de campos obrigatórios básicos
         required_fields = ['desc', 'city', 'author']
         missing_fields = [field for field in required_fields 
                          if not request.form.get(field, '').strip()]
         
-        # Verificar se usuário está logado para validar campos adicionais
         user_logged = session.get('logged')
         if not user_logged:
-            # Para usuários não logados, campos adicionais são obrigatórios
             additional_required = ['author', 'phone']
             for field in additional_required:
                 if not request.form.get(field, '').strip():
@@ -757,7 +706,6 @@ def rescue():
             flash('Preencha todos os campos obrigatórios.', 'error')
             return render_template('rescue.html', cities=cities)
         
-        # Extração e limpeza dos dados
         data = {
             'desc': request.form.get('desc').strip(),
             'city': request.form.get('city').strip(),
@@ -766,19 +714,15 @@ def rescue():
             'cep': request.form.get('cep', '').strip() or None,
         }
         
-        # Dados específicos por tipo de usuário
         if user_logged:
-            # Usuário logado - dados vêm da sessão (assumindo que existam na sessão)
             data['author'] = session.get('user_name') or session.get('user_email', 'Usuário Logado')
             data['phone'] = session.get('user_phone')
             data['userId'] = session.get('user_id')
         else:
-            # Usuário anônimo - dados vêm do formulário
             data['author'] = request.form.get('author').strip()
             data['phone'] = request.form.get('phone').strip()
             data['userId'] = None
         
-        # Processamento de foto (opcional)
         photo_filename = None
         photo = request.files['photo']
         
@@ -787,7 +731,6 @@ def rescue():
                 extension = photo.filename.rsplit('.', 1)[1].lower()
                 photo_filename = str(uuid.uuid4()) + '.' + extension
                 
-                # Cria diretório se não existir
                 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                 
                 photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
@@ -796,7 +739,6 @@ def rescue():
                 flash('Erro ao fazer upload da imagem.', 'error')
                 return render_template('rescue.html', cities=cities)
         
-        # Salvar no banco
         if saveRescue(
             desc=data['desc'],
             author=data['author'],
@@ -814,7 +756,6 @@ def rescue():
                 flash('Resgate anônimo registrado com sucesso!', 'success')
             return redirect(url_for('index'))
         else:
-            # Remove arquivo se salvamento falhou
             if photo_filename:
                 try:
                     os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
@@ -828,22 +769,18 @@ def rescue():
     
     return render_template('rescue.html', cities=cities)
 
-# Rota para listar denúncias do usuário
 @app.route('/user_reports')
 def user_reports():
-    # Verificar se usuário está logado
     if not session.get('logged'):
         flash('Você precisa estar logado para ver suas denúncias.', 'error')
         return redirect(url_for('login'))
     
-    # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
     
     try:
         user_id = session.get('user_id')
         
-        # Buscar denúncias do usuário ordenadas por data (mais recentes primeiro)
         reports = Report.query.filter_by(rep_user_id=user_id)\
                              .order_by(Report.rep_created_at.desc())\
                              .all()
@@ -855,22 +792,18 @@ def user_reports():
         flash('Erro ao carregar suas denúncias.', 'error')
         return redirect(url_for('index'))
     
-# Rota para listar resgates do usuário
 @app.route('/user_rescues')
 def user_rescues():
-    # Verificar se usuário está logado
     if not session.get('logged'):
         flash('Você precisa estar logado para ver seus resgates.', 'error')
         return redirect(url_for('login'))
     
-    # Redirect para ONGs logadas
     if session.get('ong_logged'):
         return redirect(url_for('index'))
     
     try:
         user_id = session.get('user_id')
         
-        # Buscar resgates do usuário ordenados por data (mais recentes primeiro)
         rescues = Rescue.query.filter_by(resc_user_id=user_id)\
                              .order_by(Rescue.resc_created_at.desc())\
                              .all()
@@ -910,7 +843,6 @@ def ong_ongoing(id):
     
 @app.route('/finish_report/<int:id>', methods=['POST'])
 def finish_report(id):
-    # Pegar o ID da ONG da sessão (não do usuário)
     ong_id = session.get('ong_id')
 
     if not ong_id:
@@ -920,12 +852,11 @@ def finish_report(id):
         flash(message, 'warning')
         return redirect(url_for('ong_login'))
 
-    # Buscar denúncia que pertence a esta ONG e está aceita
     report = Report.query.filter(
         and_(
             Report.rep_id == id,
             Report.rep_ong_id == ong_id,
-            Report.rep_status == 'andamento'  # Só pode finalizar se estiver aceita
+            Report.rep_status == 'andamento' 
         )
     ).first()
 
@@ -953,7 +884,6 @@ def finish_report(id):
 
 @app.route('/finish_rescue/<int:id>', methods=['POST'])
 def finish_rescue(id):
-    # Pegar o ID da ONG da sessão (não do usuário)
     ong_id = session.get('ong_id')
 
     if not ong_id:
@@ -963,12 +893,11 @@ def finish_rescue(id):
         flash(message, 'warning')
         return redirect(url_for('ong_login'))
 
-    # Buscar resgate que pertence a esta ONG e está aceito
     rescue = Rescue.query.filter(
         and_(
             Rescue.resc_id == id,
             Rescue.resc_ong_id == ong_id,
-            Rescue.resc_status == 'andamento'  # Só pode finalizar se estiver aceito
+            Rescue.resc_status == 'andamento' 
         )
     ).first()
 
@@ -1032,7 +961,6 @@ def create_event(id):
 
         photo_filename = None
 
-        # Tratamento do upload da foto, seguindo seu padrão
         if photo and photo.filename and checkExtension(photo.filename):
             try:
                 extension = photo.filename.rsplit('.', 1)[1].lower()
@@ -1060,7 +988,6 @@ def create_event(id):
             
         except Exception as e:
             logging.error(f"Erro ao salvar evento no banco: {e}")
-            # Remove foto salva caso falhe o commit
             if photo_filename:
                 try:
                     os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
@@ -1086,7 +1013,6 @@ def delete_event(event_id):
         flash('Evento não encontrado ou acesso negado.', 'error')
         return redirect(url_for('ong_events', id=session.get('ong_id')))
 
-    # Apagar a imagem se houver
     if event.event_photo:
         try:
             photo_path = os.path.join(app.config['UPLOAD_FOLDER'], event.event_photo)
