@@ -34,7 +34,6 @@
                                 <li><i class="bi bi-geo-alt-fill me-1"></i> {{ event.event_location }}{% if event.event_city %}, {{ event.event_city }}{% endif %}</li>
                             </ul>
                 
-                            <!-- Botão de excluir -->
                             <form action="{{ url_for('delete_event', event_id=event.event_id) }}" method="post" class="mt-3">
                                 <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Tem certeza que deseja excluir este evento?');">
                                     <i class="bi bi-trash-fill me-1"></i> Excluir
